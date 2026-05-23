@@ -1,0 +1,2 @@
+# EF Core migrations are generated via: dotnet ef migrations add <Name>
+# This file exists only to track the empty folder in git.
