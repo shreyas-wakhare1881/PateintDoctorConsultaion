@@ -6,8 +6,30 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- NuGet packages -->
   <ItemGroup>
+    <!-- AutoMapper 12+ includes DI extensions built-in; no separate Extensions package needed -->
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <!-- Project references — full modular monolith dependency graph -->
+  <ItemGroup>
+    <ProjectReference Include="../Shared/Shared.csproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
+    <ProjectReference Include="../Modules/Shared/Modules.Shared.csproj" />
+    <ProjectReference Include="../Modules/Auth/Modules.Auth.csproj" />
+    <ProjectReference Include="../Modules/Patient/Modules.Patient.csproj" />
+    <ProjectReference Include="../Modules/Doctor/Modules.Doctor.csproj" />
+    <ProjectReference Include="../Modules/Consultation/Modules.Consultation.csproj" />
+    <ProjectReference Include="../Modules/Admin/Modules.Admin.csproj" />
   </ItemGroup>
 
 </Project>

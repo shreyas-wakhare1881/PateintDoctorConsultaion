@@ -1,6 +1,7 @@
 using PatientDoctorConsultation.API.Extensions;
 using PatientDoctorConsultation.API.Middleware;
 using PatientDoctorConsultation.API.Hubs;
+using PatientDoctorConsultation.Shared.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,9 +14,9 @@ builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddSignalR();
 
 // ── Configuration binding ─────────────────────────────────────────────────────
-builder.Services.Configure<PatientDoctorConsultation.API.Config.JwtConfig>(
+builder.Services.Configure<JwtConfig>(
     builder.Configuration.GetSection("Jwt"));
-builder.Services.Configure<PatientDoctorConsultation.API.Config.LiveKitConfig>(
+builder.Services.Configure<LiveKitConfig>(
     builder.Configuration.GetSection("LiveKit"));
 
 // ── Build ─────────────────────────────────────────────────────────────────────

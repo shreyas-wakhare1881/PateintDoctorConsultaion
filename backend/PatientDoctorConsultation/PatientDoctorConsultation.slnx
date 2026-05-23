@@ -1,3 +1,11 @@
 <Solution>
   <Project Path="API/API.csproj" />
+  <Project Path="Shared/Shared.csproj" />
+  <Project Path="Infrastructure/Infrastructure.csproj" />
+  <Project Path="Modules/Shared/Modules.Shared.csproj" />
+  <Project Path="Modules/Auth/Modules.Auth.csproj" />
+  <Project Path="Modules/Patient/Modules.Patient.csproj" />
+  <Project Path="Modules/Doctor/Modules.Doctor.csproj" />
+  <Project Path="Modules/Consultation/Modules.Consultation.csproj" />
+  <Project Path="Modules/Admin/Modules.Admin.csproj" />
 </Solution>

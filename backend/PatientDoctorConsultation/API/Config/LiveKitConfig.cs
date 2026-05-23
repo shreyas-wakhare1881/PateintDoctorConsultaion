@@ -1,8 +1,4 @@
-namespace PatientDoctorConsultation.API.Config;
-
-public class LiveKitConfig
-{
-    public string ApiKey { get; set; } = string.Empty;
-    public string ApiSecret { get; set; } = string.Empty;
-    public string Host { get; set; } = string.Empty;
-}
+// LiveKitConfig has been moved to PatientDoctorConsultation.Shared.Config.LiveKitConfig
+// to prevent circular dependency between API and Infrastructure layers.
+// Update usages to: using PatientDoctorConsultation.Shared.Config;
+namespace PatientDoctorConsultation.API.Config { }

@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using PatientDoctorConsultation.API.Config;
+using PatientDoctorConsultation.Shared.Config;
 
 namespace PatientDoctorConsultation.Infrastructure.Identity.Jwt;
 
@@ -18,7 +18,7 @@ public sealed class JwtTokenGenerator(IOptions<JwtConfig> options) : IJwtTokenGe
 
     public string GenerateToken(Guid userId, string email, string role)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.SecretKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]

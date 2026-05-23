@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using PatientDoctorConsultation.API.Config;
+using PatientDoctorConsultation.Shared.Config;
 
 namespace PatientDoctorConsultation.Infrastructure.Realtime.LiveKit;
 

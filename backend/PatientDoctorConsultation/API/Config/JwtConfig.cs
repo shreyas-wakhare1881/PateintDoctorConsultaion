@@ -1,9 +1,4 @@
-namespace PatientDoctorConsultation.API.Config;
-
-public class JwtConfig
-{
-    public string Secret { get; set; } = string.Empty;
-    public string Issuer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public int ExpiryMinutes { get; set; } = 60;
-}
+// JwtConfig has been moved to PatientDoctorConsultation.Shared.Config.JwtConfig
+// to prevent circular dependency between API and Infrastructure layers.
+// Update usages to: using PatientDoctorConsultation.Shared.Config;
+namespace PatientDoctorConsultation.API.Config { }

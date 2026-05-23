@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Hosting;
+
 namespace PatientDoctorConsultation.Infrastructure.Storage.Local;
 
 public interface ILocalStorageService

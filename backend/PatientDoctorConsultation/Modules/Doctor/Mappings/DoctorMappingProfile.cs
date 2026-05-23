@@ -1,6 +1,7 @@
 using AutoMapper;
 using PatientDoctorConsultation.Modules.Doctor.DTOs;
-using PatientDoctorConsultation.Modules.Doctor.Models;
+using PatientDoctorConsultation.Shared.Enums;
+using DoctorModel = PatientDoctorConsultation.Modules.Doctor.Models.Doctor;
 
 namespace PatientDoctorConsultation.Modules.Doctor.Mappings;
 
@@ -8,16 +9,16 @@ public class DoctorMappingProfile : Profile
 {
     public DoctorMappingProfile()
     {
-        CreateMap<Doctor, DoctorProfileDto>()
+        CreateMap<DoctorModel, DoctorProfileDto>()
             .ForMember(dest => dest.Email, opt => opt.Ignore())
             .ForMember(dest => dest.IsAvailable, opt =>
-                opt.MapFrom(src => src.AvailabilityStatus == Shared.Enums.DoctorAvailabilityStatus.Available));
+                opt.MapFrom(src => src.AvailabilityStatus == DoctorAvailabilityStatus.Available));
 
-        CreateMap<Doctor, DoctorListItemDto>()
+        CreateMap<DoctorModel, DoctorListItemDto>()
             .ForMember(dest => dest.IsAvailable, opt =>
-                opt.MapFrom(src => src.AvailabilityStatus == Shared.Enums.DoctorAvailabilityStatus.Available));
+                opt.MapFrom(src => src.AvailabilityStatus == DoctorAvailabilityStatus.Available));
 
-        CreateMap<UpdateDoctorProfileRequest, Doctor>()
+        CreateMap<UpdateDoctorProfileRequest, DoctorModel>()
             .ForAllMembers(opt => opt.Condition((_, _, src) => src is not null));
     }
 }
