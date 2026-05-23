@@ -8,11 +8,9 @@ public class AuthMappingProfile : Profile
 {
     public AuthMappingProfile()
     {
-        CreateMap<User, AuthTokenResponse>()
-            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
-            .ForMember(dest => dest.AccessToken, opt => opt.Ignore())
-            .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())
-            .ForMember(dest => dest.ExpiresAt, opt => opt.Ignore());
+        CreateMap<User, UserProfileDto>()
+            .ForCtorParam("phoneNumber", opt => opt.MapFrom(
+                src => string.IsNullOrEmpty(src.PhoneNumber) ? null : src.PhoneNumber))
+            .ForCtorParam("role", opt => opt.MapFrom(src => src.Role.ToString()));
     }
 }
