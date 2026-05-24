@@ -16,11 +16,15 @@
     <ProjectReference Include="../../Shared/Shared.csproj" />
     <ProjectReference Include="../../Infrastructure/Infrastructure.csproj" />
     <ProjectReference Include="../Shared/Modules.Shared.csproj" />
+    <!-- One-way dependency: Doctor module needs User entity for cross-table joins (FullName/Email in responses) -->
+    <ProjectReference Include="../Auth/Modules.Auth.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <!-- Required for EF.Functions.ILike (case-insensitive search) in LINQ queries -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
   </ItemGroup>
 
 </Project>

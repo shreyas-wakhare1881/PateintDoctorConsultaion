@@ -8,6 +8,10 @@ using PatientDoctorConsultation.Modules.Auth.Interfaces;
 using PatientDoctorConsultation.Modules.Auth.Mappings;
 using PatientDoctorConsultation.Modules.Auth.Services;
 using PatientDoctorConsultation.Modules.Auth.Validators;
+using PatientDoctorConsultation.Modules.Doctor.Interfaces;
+using PatientDoctorConsultation.Modules.Doctor.Mappings;
+using PatientDoctorConsultation.Modules.Doctor.Services;
+using PatientDoctorConsultation.Modules.Doctor.Validators;
 
 namespace PatientDoctorConsultation.API.Extensions;
 
@@ -27,12 +31,23 @@ public static class ServiceExtensions
         // ── Auth module ────────────────────────────────────────────────────────
         services.AddScoped<IAuthService, AuthService>();
 
-        // ── AutoMapper ─────────────────────────────────────────────────────────
-        services.AddAutoMapper(cfg => cfg.AddMaps(typeof(AuthMappingProfile).Assembly));
+        // ── Doctor module ──────────────────────────────────────────────────────
+        services.AddScoped<IDoctorService, DoctorService>();
 
-        // ── FluentValidation — register all validators from Auth module ────────
+        // ── AutoMapper ─────────────────────────────────────────────────────────
+        services.AddAutoMapper(cfg =>
+        {
+            cfg.AddMaps(typeof(AuthMappingProfile).Assembly);
+            cfg.AddMaps(typeof(DoctorMappingProfile).Assembly);
+        });
+
+        // ── FluentValidation — Auth module ─────────────────────────────────────
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
+        // ── FluentValidation — Doctor module ───────────────────────────────────
+        services.AddValidatorsFromAssemblyContaining<CreateDoctorProfileRequestValidator>();
 
         return services;
     }
 }
+

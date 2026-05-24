@@ -1,24 +1,19 @@
 using AutoMapper;
-using PatientDoctorConsultation.Modules.Doctor.DTOs;
-using PatientDoctorConsultation.Shared.Enums;
-using DoctorModel = PatientDoctorConsultation.Modules.Doctor.Models.Doctor;
 
 namespace PatientDoctorConsultation.Modules.Doctor.Mappings;
 
+/// <summary>
+/// Doctor module AutoMapper profile.
+/// The DoctorService uses manual LINQ projections for all cross-table joins,
+/// so no explicit mappings are needed here. The class is kept so AutoMapper's
+/// assembly scanning (AddAutoMapper) includes this assembly without errors.
+/// </summary>
 public class DoctorMappingProfile : Profile
 {
     public DoctorMappingProfile()
     {
-        CreateMap<DoctorModel, DoctorProfileDto>()
-            .ForMember(dest => dest.Email, opt => opt.Ignore())
-            .ForMember(dest => dest.IsAvailable, opt =>
-                opt.MapFrom(src => src.AvailabilityStatus == DoctorAvailabilityStatus.Available));
-
-        CreateMap<DoctorModel, DoctorListItemDto>()
-            .ForMember(dest => dest.IsAvailable, opt =>
-                opt.MapFrom(src => src.AvailabilityStatus == DoctorAvailabilityStatus.Available));
-
-        CreateMap<UpdateDoctorProfileRequest, DoctorModel>()
-            .ForAllMembers(opt => opt.Condition((_, _, src) => src is not null));
+        // Doctor service uses manual projections for cross-table joins.
     }
 }
+
+
