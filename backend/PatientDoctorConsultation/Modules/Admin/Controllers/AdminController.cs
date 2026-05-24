@@ -9,6 +9,7 @@ namespace PatientDoctorConsultation.Modules.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class AdminController(IAdminService adminService) : ControllerBase
 {
+    private readonly IAdminService _adminService = adminService;
     [HttpGet("doctors")]
     public IActionResult GetDoctors() => Ok();
 

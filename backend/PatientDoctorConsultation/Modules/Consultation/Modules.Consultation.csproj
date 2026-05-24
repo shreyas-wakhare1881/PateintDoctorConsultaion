@@ -16,6 +16,9 @@
     <ProjectReference Include="../../Shared/Shared.csproj" />
     <ProjectReference Include="../../Infrastructure/Infrastructure.csproj" />
     <ProjectReference Include="../Shared/Modules.Shared.csproj" />
+    <!-- Cross-module FK configuration: ConsultationConfiguration references Patient, Doctor, DoctorAvailability entities -->
+    <ProjectReference Include="../Doctor/Modules.Doctor.csproj" />
+    <ProjectReference Include="../Patient/Modules.Patient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

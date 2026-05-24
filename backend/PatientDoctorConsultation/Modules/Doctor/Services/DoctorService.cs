@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
 using PatientDoctorConsultation.Modules.Auth.Models;
 using PatientDoctorConsultation.Modules.Doctor.DTOs;
@@ -11,7 +12,7 @@ using AvailabilityModel = PatientDoctorConsultation.Modules.Doctor.Models.Doctor
 
 namespace PatientDoctorConsultation.Modules.Doctor.Services;
 
-public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
+public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService> logger) : IDoctorService
 {
     // ════════════════════════════════════════════════════════════════════════
     // CREATE PROFILE
@@ -75,6 +76,8 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
         db.Set<DoctorModel>().Add(doctor);
         await db.SaveChangesAsync(ct);
 
+        logger.LogInformation("Doctor profile created. UserId={UserId}", userId);
+
         return BuildDoctorProfileResponse(doctor, user);
     }
 
@@ -133,6 +136,9 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
         doctor.UpdatedAt          = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Doctor profile updated. UserId={UserId}", userId);
+
         return BuildDoctorProfileResponse(doctor, user);
     }
 
@@ -180,6 +186,9 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
         db.Set<AvailabilityModel>().Add(slot);
         await db.SaveChangesAsync(ct);
 
+        logger.LogInformation("Availability slot added. DoctorId={DoctorId} Day={Day} Time={Start}-{End}",
+            doctor.Id, request.DayOfWeek, startTime, endTime);
+
         return MapToAvailabilityResponse(slot);
     }
 
@@ -220,7 +229,10 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
 
         // Ownership gate — doctor cannot modify another doctor's slot
         if (slot.DoctorId != doctor.Id)
-            throw new UnauthorizedException("You are not authorized to modify this availability slot.");
+        {
+            logger.LogWarning("Forbidden: UserId={UserId} attempted to modify slot {SlotId} owned by another doctor", userId, slotId);
+            throw new ForbiddenException("You are not authorized to modify this availability slot.");
+        }
 
         // Determine effective times after the update
         var effectiveStart = request.StartTime is not null
@@ -284,7 +296,10 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
             ?? throw NotFoundException.For("Availability slot", slotId);
 
         if (slot.DoctorId != doctor.Id)
-            throw new UnauthorizedException("You are not authorized to delete this availability slot.");
+        {
+            logger.LogWarning("Forbidden: UserId={UserId} attempted to delete slot {SlotId} owned by another doctor", userId, slotId);
+            throw new ForbiddenException("You are not authorized to delete this availability slot.");
+        }
 
         db.Set<AvailabilityModel>().Remove(slot);
         await db.SaveChangesAsync(ct);

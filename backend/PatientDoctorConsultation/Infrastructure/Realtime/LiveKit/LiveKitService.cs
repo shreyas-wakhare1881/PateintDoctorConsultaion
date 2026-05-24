@@ -13,6 +13,7 @@ public sealed class LiveKitService(IOptions<LiveKitConfig> options, HttpClient h
     : ILiveKitService
 {
     private readonly LiveKitConfig _config = options.Value;
+    private readonly HttpClient _httpClient = httpClient;
 
     public Task<string> CreateRoomAsync(string roomName, CancellationToken ct = default)
         => throw new NotImplementedException("LiveKit room creation — implement with LiveKit SDK.");

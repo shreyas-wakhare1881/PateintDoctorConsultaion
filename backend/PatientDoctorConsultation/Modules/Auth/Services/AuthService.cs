@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PatientDoctorConsultation.Infrastructure.Identity.Jwt;
 using PatientDoctorConsultation.Infrastructure.Identity.OTP;
 using PatientDoctorConsultation.Infrastructure.Identity.Passwords;
@@ -20,7 +21,8 @@ public sealed class AuthService(
     IJwtTokenGenerator jwtGenerator,
     IOtpService otpService,
     IPasswordService passwordService,
-    IMapper mapper) : IAuthService
+    IMapper mapper,
+    ILogger<AuthService> logger) : IAuthService
 {
     // ──────────────────────────────────────────────────────────────────────────
     // REGISTER
@@ -93,6 +95,8 @@ public sealed class AuthService(
 
         await db.SaveChangesAsync(ct);
 
+        logger.LogInformation("New {Role} account registered. UserId={UserId}", role, user.Id);
+
         return mapper.Map<UserProfileDto>(user);
     }
 
@@ -142,9 +146,11 @@ public sealed class AuthService(
 
         if (!validPassword)
         {
+            logger.LogWarning("Login failed: invalid password. UserId={UserId} Role={Role}", user.Id, role);
             throw new UnauthorizedException("Invalid credentials.");
         }
 
+        logger.LogInformation("Login successful. UserId={UserId} Role={Role}", user.Id, role);
         return await IssueTokenPairAsync(user, ct);
     }
 
@@ -201,6 +207,8 @@ public sealed class AuthService(
 
         await db.SaveChangesAsync(ct);
 
+        logger.LogInformation("OTP dispatched. UserId={UserId}", user.Id);
+
         return new OtpResponse(
             "OTP sent successfully. Valid for 5 minutes.",
             user.OtpExpiresAt.Value);
@@ -245,6 +253,7 @@ public sealed class AuthService(
 
         if (!validOtp)
         {
+            logger.LogWarning("OTP verification failed: invalid code. UserId={UserId}", user.Id);
             throw new UnauthorizedException("Invalid OTP code.");
         }
 
@@ -256,6 +265,8 @@ public sealed class AuthService(
         user.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("OTP verified. Patient login successful. UserId={UserId}", user.Id);
 
         return await IssueTokenPairAsync(user, ct);
     }

@@ -125,7 +125,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
                ?? User.FindFirstValue("sub");
 
         if (sub is null || !Guid.TryParse(sub, out var userId))
-            throw new UnauthorizedAccessException("User identity not found in token.");
+            throw new UnauthorizedException("User identity not found in token.");
 
         return userId;
     }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
 using PatientDoctorConsultation.Modules.Auth.Models;
 using PatientDoctorConsultation.Modules.Patient.DTOs;
@@ -11,7 +12,7 @@ using PatientModel = PatientDoctorConsultation.Modules.Patient.Models.Patient;
 
 namespace PatientDoctorConsultation.Modules.Patient.Services;
 
-public sealed class PatientService(ApplicationDbContext db) : IPatientService
+public sealed class PatientService(ApplicationDbContext db, ILogger<PatientService> logger) : IPatientService
 {
     // ════════════════════════════════════════════════════════════════════════
     // CREATE PROFILE
@@ -63,6 +64,8 @@ public sealed class PatientService(ApplicationDbContext db) : IPatientService
 
         db.Set<PatientModel>().Add(patient);
         await db.SaveChangesAsync(ct);
+
+        logger.LogInformation("Patient profile created. UserId={UserId}", userId);
 
         return BuildProfileResponse(patient, user);
     }
@@ -207,6 +210,9 @@ public sealed class PatientService(ApplicationDbContext db) : IPatientService
                     : x.Doctor.LanguagesSpoken,
                 x.Doctor.ProfileImageUrl))
             .ToListAsync(ct);
+
+        logger.LogDebug("Doctor search completed. TotalCount={TotalCount} Page={Page} PageSize={PageSize}",
+            totalCount, page, pageSize);
 
         return PaginatedResponse<PatientDoctorDiscoveryItem>.Create(items, totalCount, page, pageSize);
     }

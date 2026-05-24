@@ -25,23 +25,32 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         catch (ConflictException ex)
         {
             logger.LogWarning("Conflict: {Message}", ex.Message);
-            await WriteAsync(context, HttpStatusCode.Conflict, ApiResponse.Fail(ex.Message));
+            await WriteAsync(context, HttpStatusCode.Conflict,
+                ApiResponse<object>.Fail(ex.Message));
         }
         catch (NotFoundException ex)
         {
             logger.LogWarning("Not found: {Message}", ex.Message);
-            await WriteAsync(context, HttpStatusCode.NotFound, ApiResponse.Fail(ex.Message));
+            await WriteAsync(context, HttpStatusCode.NotFound,
+                ApiResponse<object>.Fail(ex.Message));
+        }
+        catch (ForbiddenException ex)
+        {
+            logger.LogWarning("Forbidden: {Message}", ex.Message);
+            await WriteAsync(context, HttpStatusCode.Forbidden,
+                ApiResponse<object>.Fail(ex.Message));
         }
         catch (UnauthorizedException ex)
         {
             logger.LogWarning("Unauthorized: {Message}", ex.Message);
-            await WriteAsync(context, HttpStatusCode.Unauthorized, ApiResponse.Fail(ex.Message));
+            await WriteAsync(context, HttpStatusCode.Unauthorized,
+                ApiResponse<object>.Fail(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unhandled exception");
             await WriteAsync(context, HttpStatusCode.InternalServerError,
-                ApiResponse.Fail("An unexpected error occurred."));
+                ApiResponse<object>.Fail("An unexpected error occurred."));
         }
     }
 

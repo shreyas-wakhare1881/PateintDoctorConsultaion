@@ -123,6 +123,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<AvailabilityResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateAvailability(
@@ -145,6 +146,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [Authorize(Roles = Roles.Doctor)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAvailability(Guid slotId, CancellationToken ct)
     {
@@ -190,7 +192,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
                ?? User.FindFirstValue("sub");
 
         if (sub is null || !Guid.TryParse(sub, out var userId))
-            throw new UnauthorizedAccessException("User identity not found in token.");
+            throw new UnauthorizedException("User identity not found in token.");
 
         return userId;
     }
