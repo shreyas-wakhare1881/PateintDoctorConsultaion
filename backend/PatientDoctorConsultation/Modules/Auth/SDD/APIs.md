@@ -4,7 +4,7 @@
 > **Base Path:** `/api/auth`  
 > **Version:** 1.0  
 > **Status:** Active  
-> **Last Updated:** 2026-05-23
+> **Last Updated:** 2026-05-24
 
 ---
 
@@ -12,7 +12,7 @@
 
 | # | Method | Route | Auth Required | Purpose |
 |---|--------|-------|---------------|---------|
-| 1 | POST | `/api/auth/send-otp` | None | Send OTP to patient email/phone |
+| 1 | POST | `/api/auth/send-otp` | None | Send OTP to patient phone number (E.164) |
 | 2 | POST | `/api/auth/verify-otp` | None | Verify OTP → issue JWT |
 | 3 | POST | `/api/auth/register` | None | Register Doctor (pending approval) |
 | 4 | POST | `/api/auth/login` | None | Login for Doctor / Admin |
@@ -49,25 +49,28 @@ All responses follow this envelope:
 
 **`POST /api/auth/send-otp`**
 
-> Generates and dispatches a 6-digit OTP to the provided contact. Intended for Patient role only.
+> Generates and sends a 6-digit numeric OTP to the provided patient phone number. Auto-creates a lightweight Patient account if no account exists for this phone number. **Patient-only flow** — Doctors/Admins must not use this endpoint.
 
 ### Request Body
 ```json
 {
-  "email": "patient@example.com"
+  "phoneNumber": "+919876543210"
 }
 ```
 
 ### Validation Rules
-| Field   | Rule |
-|---------|------|
-| `email` | Required · Valid email format · Max 256 chars · Must exist in system |
+| Field         | Rule |
+|---------------|------|
+| `phoneNumber` | Required · E.164 format (`+[country code][number]`) · 8–15 digits total |
 
 ### Success Response — `200 OK`
 ```json
 {
   "success": true,
-  "message": "OTP sent successfully. Valid for 5 minutes."
+  "data": {
+    "message": "OTP sent successfully. Valid for 5 minutes.",
+    "expiresAt": "2026-05-24T12:15:00Z"
+  }
 }
 ```
 
@@ -75,15 +78,16 @@ All responses follow this envelope:
 
 | Status | Code | Scenario |
 |--------|------|----------|
-| `400` | `VALIDATION_ERROR` | Invalid email format |
-| `404` | `USER_NOT_FOUND` | Email not registered |
-| `403` | `ACCOUNT_INACTIVE` | User account is deactivated |
+| `400` | `VALIDATION_ERROR` | Invalid or missing phone number format |
+| `400` | `ROLE_NOT_ALLOWED` | Phone belongs to a Doctor/Admin account |
+| `403` | `ACCOUNT_INACTIVE` | Patient account is deactivated |
 | `429` | `RATE_LIMIT_EXCEEDED` | Too many OTP requests (future) |
 
 ### Notes
 - OTP is valid for **5 minutes** from issuance
 - Subsequent calls overwrite the previous OTP
-- Does **not** expose whether the email exists (security — use generic error in production)
+- Auto-creates Patient User on first call (`FullName = ""`, `Email = null`, `IsVerified = false`)
+- In dev/test: set `Otp:DevFixedCode` in config to get a predictable OTP (e.g. `"123456"`)
 
 ---
 
@@ -91,13 +95,53 @@ All responses follow this envelope:
 
 **`POST /api/auth/verify-otp`**
 
-> Validates submitted OTP. On success, issues JWT access token + refresh token pair.
+> Validates submitted OTP against stored OtpCode. On success, sets `IsVerified = true`, clears OTP fields, and issues a JWT access token + refresh token pair. **Patient-only flow.**
 
 ### Request Body
 ```json
 {
-  "email": "patient@example.com",
+  "phoneNumber": "+919876543210",
   "otp": "482910"
+}
+```
+
+### Validation Rules
+| Field         | Rule |
+|---------------|------|
+| `phoneNumber` | Required · E.164 format |
+| `otp`         | Required · Exactly 6 numeric digits |
+
+### Success Response — `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "d2f4a8c1-...",
+    "expiresIn": 3600,
+    "tokenType": "Bearer",
+    "user": {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "fullName": "",
+      "email": null,
+      "phoneNumber": "+919876543210",
+      "role": "Patient",
+      "isVerified": true
+    }
+  }
+}
+```
+
+### Error Responses
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `400` | `VALIDATION_ERROR` | Missing or malformed fields |
+| `401` | `INVALID_CREDENTIALS` | Phone number not found |
+| `401` | `INVALID_OTP` | OTP code does not match |
+| `401` | `OTP_EXPIRED` | OTP window has passed |
+| `401` | `NO_PENDING_OTP` | send-otp was never called first |
+| `403` | `ACCOUNT_INACTIVE` | Account is disabled |
 }
 ```
 

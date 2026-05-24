@@ -16,11 +16,13 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(u => u.Email)
-            .IsRequired()
             .HasMaxLength(256);
 
+        // Partial unique index: only one non-null email per row.
+        // Phone-only patients (Email = null) are excluded and do not conflict.
         builder.HasIndex(u => u.Email)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"Email\" IS NOT NULL");
 
         builder.Property(u => u.PhoneNumber)
             .IsRequired();

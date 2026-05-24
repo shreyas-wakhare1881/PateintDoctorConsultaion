@@ -11,7 +11,7 @@ public sealed record AuthTokenResponse(
 public sealed record UserProfileDto(
     Guid Id,
     string FullName,
-    string Email,
+    string? Email,
     string? PhoneNumber,
     string Role,
     bool IsActive,

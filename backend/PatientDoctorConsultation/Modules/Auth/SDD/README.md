@@ -4,7 +4,7 @@
 > **Bounded Context:** Identity & Access Management  
 > **Version:** 1.0  
 > **Status:** Active  
-> **Last Updated:** 2026-05-23
+> **Last Updated:** 2026-05-24
 
 ---
 
@@ -25,7 +25,7 @@ All other modules depend on Auth Module for identity claims. No module performs 
 
 | Method | Actors | Mechanism |
 |--------|--------|-----------|
-| **OTP Login** | Patient | 6-digit numeric OTP via email/SMS; no password required |
+| **OTP Login** | Patient | 6-digit numeric OTP via **phone number** (SMS); no password, no email required |
 | **Credential Login** | Doctor, Admin | Email + BCrypt-hashed password |
 | **Token Refresh** | All roles | Single-use refresh token rotation |
 | **MFA (Planned)** | Doctor, Admin | TOTP via Authenticator app |
@@ -42,11 +42,11 @@ Header.Payload.Signature
 
 Claims included:
   sub   → User UUID
-  email → User email
+  email → User email (Doctor/Admin) or phone number (Patient)
   role  → Patient | Doctor | Admin
   jti   → Unique token ID (for future revocation)
   iat   → Issued at (UTC)
-  exp   → Expires at (iat + 15 minutes)
+  exp   → Expires at (iat + 60 minutes)
 ```
 
 **Token pair model:**

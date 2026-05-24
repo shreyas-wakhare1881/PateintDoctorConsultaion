@@ -66,10 +66,10 @@ public class SendOtpRequestValidator : AbstractValidator<SendOtpRequest>
 {
     public SendOtpRequestValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("A valid email address is required.")
-            .MaximumLength(256).WithMessage("Email must not exceed 256 characters.");
+        RuleFor(x => x.PhoneNumber)
+            .NotEmpty().WithMessage("Phone number is required.")
+            .Matches(@"^\+[1-9]\d{6,14}$")
+            .WithMessage("Phone number must be in E.164 format (e.g., +919876543210).");
     }
 }
 
@@ -77,14 +77,14 @@ public class VerifyOtpRequestValidator : AbstractValidator<VerifyOtpRequest>
 {
     public VerifyOtpRequestValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("A valid email address is required.");
+        RuleFor(x => x.PhoneNumber)
+            .NotEmpty().WithMessage("Phone number is required.")
+            .Matches(@"^\+[1-9]\d{6,14}$")
+            .WithMessage("Phone number must be in E.164 format (e.g., +919876543210).");
 
         RuleFor(x => x.Otp)
             .NotEmpty().WithMessage("OTP is required.")
-            .Length(4, 6).WithMessage("OTP must be 4 to 6 digits.")
-            .Matches(@"^\d+$").WithMessage("OTP must be numeric.");
+            .Matches(@"^\d{4}$").WithMessage("OTP must be exactly 4 numeric digits.");
     }
 }
 

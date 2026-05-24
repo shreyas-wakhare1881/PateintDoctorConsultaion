@@ -7,7 +7,8 @@ public class User : BaseAuditableEntity
 {
     public string FullName { get; set; } = string.Empty;
 
-    public string Email { get; set; } = string.Empty;
+    // Null for phone-only patients; set for Doctor/Admin accounts.
+    public string? Email { get; set; }
 
     public string PhoneNumber { get; set; } = string.Empty;
 

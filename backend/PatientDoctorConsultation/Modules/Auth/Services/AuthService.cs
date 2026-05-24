@@ -34,11 +34,11 @@ public sealed class AuthService(
                 request.Role,
                 ignoreCase: true,
                 out var role) ||
-            role == UserRole.Admin)
+            role is UserRole.Admin or UserRole.Patient)
         {
             throw DomainValidationException.For(
                 nameof(request.Role),
-                "Only Doctor registration is permitted through this endpoint.");
+                "Only Doctor self-registration is permitted through this endpoint.");
         }
 
         var normalizedEmail = request.Email.Trim().ToLower();
@@ -149,26 +149,26 @@ public sealed class AuthService(
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SEND OTP
+    // SEND OTP  (Patient phone-based authentication)
     // ──────────────────────────────────────────────────────────────────────────
 
     public async Task<OtpResponse> SendOtpAsync(
         SendOtpRequest request,
         CancellationToken ct = default)
     {
-        var email = request.Email.Trim().ToLower();
+        var normalizedPhone = request.PhoneNumber.Trim();
 
         var user = await db.Set<User>()
-            .FirstOrDefaultAsync(u => u.Email == email, ct);
+            .FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone, ct);
 
-        // Patient auto-registration via OTP flow
+        // Auto-create lightweight Patient account on first OTP request.
         if (user is null)
         {
             user = new User
             {
-                FullName = email.Split('@')[0],
-                Email = email,
-                PhoneNumber = string.Empty,
+                FullName = string.Empty,   // filled during Patient profile creation
+                Email = null,              // phone-only patients have no email
+                PhoneNumber = normalizedPhone,
                 PasswordHash = string.Empty,
 
                 Role = UserRole.Patient,
@@ -181,6 +181,13 @@ public sealed class AuthService(
 
             db.Set<User>().Add(user);
         }
+        else if (user.Role != UserRole.Patient)
+        {
+            // Doctors/Admins must not use the OTP flow.
+            throw DomainValidationException.For(
+                nameof(request.PhoneNumber),
+                "This phone number is associated with a non-patient account. Use email/password login.");
+        }
 
         if (!user.IsActive)
         {
@@ -189,9 +196,7 @@ public sealed class AuthService(
         }
 
         user.OtpCode = otpService.Generate();
-
         user.OtpExpiresAt = otpService.GetExpiry();
-
         user.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
@@ -202,17 +207,17 @@ public sealed class AuthService(
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // VERIFY OTP
+    // VERIFY OTP  (Patient phone-based authentication)
     // ──────────────────────────────────────────────────────────────────────────
 
     public async Task<AuthTokenResponse> VerifyOtpAsync(
         VerifyOtpRequest request,
         CancellationToken ct = default)
     {
-        var normalizedEmail = request.Email.Trim().ToLower();
+        var normalizedPhone = request.PhoneNumber.Trim();
 
         var user = await db.Set<User>()
-            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct)
+            .FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone, ct)
             ?? throw new UnauthorizedException("Invalid credentials.");
 
         if (!user.IsActive)
@@ -382,7 +387,7 @@ public sealed class AuthService(
 
         var accessToken = jwtGenerator.GenerateToken(
             user.Id,
-            user.Email,
+            user.Email ?? user.PhoneNumber,  // phone-only patients use phone as identifier
             role);
 
         var rawRefreshToken = Guid.NewGuid().ToString();

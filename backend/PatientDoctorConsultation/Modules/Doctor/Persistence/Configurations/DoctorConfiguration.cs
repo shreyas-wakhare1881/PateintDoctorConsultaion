@@ -72,8 +72,7 @@ public class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
 
         // ── Approval & Visibility ─────────────────────────────────────────────
         builder.Property(d => d.ApprovalStatus)
-            .HasConversion<string>()
-            .HasMaxLength(50)
+            .HasConversion<int>()
             .IsRequired();
 
         builder.Property(d => d.IsProfileCompleted)

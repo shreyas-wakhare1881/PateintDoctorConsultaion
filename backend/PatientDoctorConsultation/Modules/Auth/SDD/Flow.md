@@ -3,7 +3,7 @@
 > **Module:** Auth  
 > **Version:** 1.0  
 > **Status:** Active  
-> **Last Updated:** 2026-05-23
+> **Last Updated:** 2026-05-24
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Actor   | Login Method       | Password Required | OTP Required | Route Access |
 |---------|--------------------|-------------------|--------------|--------------|
-| Patient | OTP (Email/Phone)  | NO                | YES          | Patient routes |
+| Patient | OTP (Phone Number only)  | NO                | YES          | Patient routes |
 | Doctor  | Email + Password   | YES               | NO           | Doctor routes  |
 | Admin   | Email + Password   | YES               | NO           | Admin routes   |
 
@@ -19,42 +19,47 @@
 
 ## 2. Patient OTP Login Flow
 
-**Trigger:** Patient opens app → clicks "Login with OTP"
+**Trigger:** Patient opens app → enters mobile number → clicks "Get OTP"
 
 ```
 Patient                     API                         Database
   |                           |                              |
   |-- POST /auth/send-otp --->|                              |
-  |   { email/phone }         |-- Lookup user by email ----->|
-  |                           |<-- User found + IsActive ----|
+  |   { phoneNumber }         |-- Lookup user by phone ----->|
+  |                           |-- If not found: auto-create  |
+  |                           |   Patient user (no email)  ->|
+  |                           |-- Check Role = Patient       |
+  |                           |-- Check IsActive = true      |
   |                           |-- Generate 6-digit OTP       |
-  |                           |-- Hash & save OTP + Expiry ->|
-  |                           |-- Send OTP via Notification  |
+  |                           |-- Save OTP + Expiry -------->|
+  |                           |-- (Send SMS via future Svc)  |
   |<-- 200 { message } -------|                              |
   |                           |                              |
   |-- POST /auth/verify-otp ->|                              |
-  |   { email, otp }          |-- Fetch user by email ------>|
+  |   { phoneNumber, otp }    |-- Fetch user by phone ------>|
   |                           |<-- OtpCode + OtpExpiresAt ---|
   |                           |-- Validate: not expired      |
   |                           |-- Validate: code matches     |
   |                           |-- Set IsVerified = true      |
   |                           |-- Clear OtpCode, OtpExpiresAt|
   |                           |-- Generate JWT + RefreshToken|
-  |                           |-- Save hashed RefreshToken -->|
+  |                           |-- Save hashed RefreshToken ->|
   |<-- 200 { jwt, refresh } --|                              |
 ```
 
 **Step-by-step:**
-1. Patient submits email or phone number
-2. System validates user exists and `IsActive = true`
-3. System generates cryptographically random 6-digit OTP
-4. OTP stored on `Users.OtpCode`, expiry set to `NOW() + 5 minutes`
-5. OTP dispatched via email (or SMS — NotificationService)
-6. Patient submits OTP code
-7. System fetches user, checks `OtpExpiresAt > NOW()`
-8. System compares submitted OTP against stored `OtpCode`
-9. On match: `IsVerified = true`, OTP fields cleared, JWT pair issued
-10. On failure: 401 returned, OTP fields remain (until expiry)
+1. Patient submits phone number in E.164 format (e.g. `+919876543210`)
+2. System looks up User by `PhoneNumber`
+3. If no user found: auto-creates a lightweight Patient account (`Email = null`, `FullName = ""`, `Role = Patient`)
+4. If phone belongs to a Doctor/Admin: reject with `DomainValidationException`
+5. System generates cryptographically random 6-digit OTP
+6. OTP stored on `Users.OtpCode`, expiry set to `NOW() + 5 minutes`
+7. OTP dispatched via SMS (current: returned in dev config `Otp:DevFixedCode`; future: SMS gateway)
+8. Patient submits phone number + OTP code
+9. System fetches user by PhoneNumber, checks `OtpExpiresAt > NOW()`
+10. System compares submitted OTP against stored `OtpCode`
+11. On match: `IsVerified = true`, OTP fields cleared, JWT pair issued
+12. On failure: 401 returned, OTP fields remain (until expiry)
 
 ---
 

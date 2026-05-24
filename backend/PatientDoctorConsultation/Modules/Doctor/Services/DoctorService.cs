@@ -454,7 +454,7 @@ public sealed class DoctorService(ApplicationDbContext db) : IDoctorService
         new(d.Id,
             d.UserId,
             u.FullName,
-            u.Email,
+            u.Email ?? string.Empty,
             d.Specialization,
             d.Qualification,
             d.ExperienceYears,

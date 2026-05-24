@@ -15,9 +15,10 @@ public sealed record LoginRequest(
     string Role
 );
 
-public sealed record SendOtpRequest(string Email);
+// Patient OTP-based authentication (phone number required, E.164 format).
+public sealed record SendOtpRequest(string PhoneNumber);
 
-public sealed record VerifyOtpRequest(string Email, string Otp);
+public sealed record VerifyOtpRequest(string PhoneNumber, string Otp);
 
 public sealed record RefreshTokenRequest(string RefreshToken);
 

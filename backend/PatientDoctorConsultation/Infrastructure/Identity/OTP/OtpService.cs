@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using Microsoft.Extensions.Configuration;
 using PatientDoctorConsultation.Shared.Constants;
 
 namespace PatientDoctorConsultation.Infrastructure.Identity.OTP;
@@ -11,19 +9,13 @@ public interface IOtpService
     bool IsValid(string stored, DateTime storedExpiry, string provided);
 }
 
-public sealed class OtpService(IConfiguration configuration) : IOtpService
+public sealed class OtpService : IOtpService
 {
     /// <summary>
-    /// Generates an OTP. In non-production environments, returns the fixed code
-    /// from Otp:DevFixedCode config key (if set) to simplify Swagger testing.
+    /// Development/testing mode: always returns the fixed 4-digit OTP "1234".
+    /// Replace this with a real SMS gateway + random generation before going to production.
     /// </summary>
-    public string Generate()
-    {
-        var devCode = configuration["Otp:DevFixedCode"];
-        return !string.IsNullOrWhiteSpace(devCode)
-            ? devCode
-            : RandomNumberGenerator.GetInt32(100_000, 999_999).ToString();
-    }
+    public string Generate() => "1234";
 
     public DateTime GetExpiry() => DateTime.UtcNow.AddMinutes(AppConstants.OtpExpiryMinutes);
 

@@ -3,7 +3,7 @@
 > **Module:** Auth  
 > **Version:** 1.0  
 > **Status:** Active  
-> **Last Updated:** 2026-05-23
+> **Last Updated:** 2026-05-24
 
 ---
 
@@ -27,8 +27,8 @@ The `Users` table is the **single source of truth** for identity and authenticat
 |-------------------------|-----------------------|----------|------------------|-------------|
 | `Id`                    | `uuid`                | NO       | `gen_random_uuid()` | Primary key — globally unique user identity |
 | `FullName`              | `character varying(256)` | NO    | —                | User's full display name |
-| `Email`                 | `character varying(256)` | NO    | —                | Unique login identifier; indexed |
-| `PhoneNumber`           | `character varying(20)`  | YES   | `NULL`           | Optional; required for OTP-based patient login |
+| `Email`                 | `character varying(256)` | YES      | `NULL`           | Login identifier for Doctor/Admin; `NULL` for phone-only Patient accounts; partial unique index (non-null only) |
+| `PhoneNumber`           | `text`               | NO       | —                | Required for all users; primary identifier for Patient OTP login; E.164 format |
 | `PasswordHash`          | `text`                | YES      | `NULL`           | BCrypt hash; NULL for OTP-only users (patients) |
 | `Role`                  | `character varying(50)`  | NO    | —                | Enum: `Patient`, `Doctor`, `Admin` |
 | `IsActive`              | `boolean`             | NO       | `true`           | Soft-disable flag; inactive users cannot authenticate |
@@ -52,8 +52,8 @@ The `Users` table is the **single source of truth** for identity and authenticat
 |--------------|---------|
 | `Id`         | UUID v4 — avoids sequential enumeration attacks; portable across distributed systems |
 | `FullName`   | Display identity — used in consultation headers, prescriptions, notifications |
-| `Email`      | Primary login credential; enforced unique at DB and application layer |
-| `PhoneNumber`| Secondary identifier; required for patient OTP delivery via SMS/WhatsApp |
+| `Email`      | Login credential for Doctor/Admin; `NULL` for phone-only Patient accounts; partial unique index enforces uniqueness only for non-null values |
+| `PhoneNumber`| **Required** for all users; primary Patient OTP identifier (E.164 format, e.g. `+919876543210`); checked for uniqueness at service layer |
 
 #### Credential Fields
 

@@ -1,17 +1,16 @@
 using AutoMapper;
-using PatientDoctorConsultation.Modules.Patient.DTOs;
-using PatientModel = PatientDoctorConsultation.Modules.Patient.Models.Patient;
 
 namespace PatientDoctorConsultation.Modules.Patient.Mappings;
 
+/// <summary>
+/// Patient module AutoMapper profile.
+/// PatientService uses manual LINQ projections for all cross-table joins.
+/// This class is kept so AutoMapper assembly scanning includes this assembly without errors.
+/// </summary>
 public class PatientMappingProfile : Profile
 {
     public PatientMappingProfile()
     {
-        CreateMap<PatientModel, PatientProfileDto>()
-            .ForMember(dest => dest.Email, opt => opt.Ignore());
-
-        CreateMap<UpdatePatientProfileRequest, PatientModel>()
-            .ForAllMembers(opt => opt.Condition((_, _, src) => src is not null));
+        // Patient service uses manual projections for cross-table joins.
     }
 }
