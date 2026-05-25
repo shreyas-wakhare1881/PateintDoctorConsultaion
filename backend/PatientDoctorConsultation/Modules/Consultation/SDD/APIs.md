@@ -90,8 +90,13 @@ Bearer JWT — Role: `Patient`
 | `parentConsultationId` | Required if `isFollowUp = true` · Referenced consultation must have `Status = Completed` and same `DoctorId` |
 
 #### Business Rules
+- **Doctor eligibility guard** *(admin moderation enforcement)*: The target doctor must satisfy ALL three conditions at the moment of booking:
+  - `ApprovalStatus == Approved` — pending, rejected, or suspended doctors cannot receive bookings
+  - `IsPubliclyVisible == true` — hidden/suspended doctors are blocked from new bookings
+  - `DeletedAt == null` — soft-deleted doctor profiles are fully excluded
+  - A suspended doctor fails all three conditions; attempting to book with one returns `409 Conflict` (invalid business state).
+- **Patient account guard**: If admin has blocked the patient (`Users.IsActive = false`) after a valid JWT was issued, the booking is rejected with `403 Forbidden`. This prevents stale-JWT exploitation between block action and token expiry.
 - Duplicate booking check: patient cannot have two `Pending` or `Confirmed` consultations with the same doctor at the same date/time
-- `ConsultationFeeSnapshot` is captured from `Doctors.ConsultationFee` at booking time and is immutable
 - `ConsultationNumber` is system-generated (e.g., `CONS-20260610-0042`)
 - A `ConsultationStatusHistory` row is inserted: `OldStatus = NULL`, `NewStatus = Pending`
 
@@ -120,10 +125,11 @@ Bearer JWT — Role: `Patient`
 | Status | Scenario |
 |--------|----------|
 | `400` | Validation failed (missing fields, past date, invalid enum) |
+| `403` | Patient account is blocked by admin — booking denied with stale JWT |
 | `404` | Doctor not found |
+| `409` | Doctor is suspended, rejected, hidden, or not approved — business state conflicts with booking |
 | `409` | Duplicate booking detected |
-| `422` | Doctor not approved or not publicly visible |
-| `422` | Slot already booked |
+| `409` | Slot already booked |
 
 ---
 

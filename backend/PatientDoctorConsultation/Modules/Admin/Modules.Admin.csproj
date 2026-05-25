@@ -16,6 +16,14 @@
     <ProjectReference Include="../../Shared/Shared.csproj" />
     <ProjectReference Include="../../Infrastructure/Infrastructure.csproj" />
     <ProjectReference Include="../Shared/Modules.Shared.csproj" />
+    <!-- Auth: User entity for admin identity and patient account management -->
+    <ProjectReference Include="../Auth/Modules.Auth.csproj" />
+    <!-- Doctor: Doctor entity for moderation workflows -->
+    <ProjectReference Include="../Doctor/Modules.Doctor.csproj" />
+    <!-- Patient: Patient entity for moderation workflows -->
+    <ProjectReference Include="../Patient/Modules.Patient.csproj" />
+    <!-- Consultation: Consultation + StatusHistory for read-only monitoring -->
+    <ProjectReference Include="../Consultation/Modules.Consultation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

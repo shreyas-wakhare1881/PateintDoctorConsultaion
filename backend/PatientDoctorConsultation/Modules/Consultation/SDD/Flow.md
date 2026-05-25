@@ -40,7 +40,10 @@ Patient                         API (Consultation Module)            Database
 **Steps:**
 1. Patient browses publicly visible, approved doctors and views their availability
 2. Patient selects a slot and submits booking with symptoms and consultation type
-3. System validates: doctor is approved and publicly visible
+3. System validates doctor eligibility (admin moderation guard — all three must pass):
+   - `ApprovalStatus == Approved` — suspended, rejected, or pending doctors are blocked
+   - `IsPubliclyVisible == true` — admin suspension sets this to `false`, blocking new bookings
+   - `DeletedAt == null` — soft-deleted profiles are blocked via EF global query filter
 4. System validates: slot is available (not already booked or blocked)
 5. System validates: `ScheduledDate` is not in the past
 6. System checks for duplicate booking: same patient + same doctor + same scheduled date/time must not exist in `Pending` or `Confirmed` state

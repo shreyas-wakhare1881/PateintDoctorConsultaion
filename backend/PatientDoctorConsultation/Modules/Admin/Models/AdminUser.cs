@@ -1,10 +1,5 @@
-using PatientDoctorConsultation.Shared.Common;
-
-namespace PatientDoctorConsultation.Modules.Admin.Models;
-
-public class AdminUser : BaseAuditableEntity
-{
-    public Guid UserId { get; set; }
-    public string FullName { get; set; } = string.Empty;
-    public bool IsSuperAdmin { get; set; }
-}
+// Admin identity is not a separate table.
+// Admins use Users.Role = Admin.
+// This file is intentionally left as a namespace placeholder.
+// See: AdminAuditLog.cs for the only Admin-owned entity.
+namespace PatientDoctorConsultation.Modules.Admin.Models { }

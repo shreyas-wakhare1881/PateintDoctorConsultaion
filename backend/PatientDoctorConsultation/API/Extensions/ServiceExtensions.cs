@@ -4,6 +4,10 @@ using PatientDoctorConsultation.Infrastructure.Identity.Jwt;
 using PatientDoctorConsultation.Infrastructure.Identity.OTP;
 using PatientDoctorConsultation.Infrastructure.Identity.Passwords;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
+using PatientDoctorConsultation.Modules.Admin.Interfaces;
+using PatientDoctorConsultation.Modules.Admin.Mappings;
+using PatientDoctorConsultation.Modules.Admin.Services;
+using PatientDoctorConsultation.Modules.Admin.Validators;
 using PatientDoctorConsultation.Modules.Auth.Interfaces;
 using PatientDoctorConsultation.Modules.Auth.Mappings;
 using PatientDoctorConsultation.Modules.Auth.Services;
@@ -48,6 +52,9 @@ public static class ServiceExtensions
         // ── Consultation module ────────────────────────────────────────────────
         services.AddScoped<IConsultationService, ConsultationService>();
 
+        // ── Admin module ───────────────────────────────────────────────────────
+        services.AddScoped<IAdminService, AdminService>();
+
         // ── AutoMapper ─────────────────────────────────────────────────────────
         services.AddAutoMapper(cfg =>
         {
@@ -55,6 +62,7 @@ public static class ServiceExtensions
             cfg.AddMaps(typeof(DoctorMappingProfile).Assembly);
             cfg.AddMaps(typeof(PatientMappingProfile).Assembly);
             cfg.AddMaps(typeof(ConsultationMappingProfile).Assembly);
+            cfg.AddMaps(typeof(AdminMappingProfile).Assembly);
         });
 
         // ── FluentValidation — Auth module ─────────────────────────────────────
@@ -68,6 +76,9 @@ public static class ServiceExtensions
 
         // ── FluentValidation — Consultation module ─────────────────────────────
         services.AddValidatorsFromAssemblyContaining<BookConsultationRequestValidator>();
+
+        // ── FluentValidation — Admin module ────────────────────────────────────
+        services.AddValidatorsFromAssemblyContaining<DoctorRejectRequestValidator>();
 
         return services;
     }

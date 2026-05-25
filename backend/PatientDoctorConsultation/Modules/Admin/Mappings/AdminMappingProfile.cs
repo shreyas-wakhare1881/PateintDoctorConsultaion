@@ -1,12 +1,16 @@
 using AutoMapper;
-using PatientDoctorConsultation.Modules.Admin.Models;
 
 namespace PatientDoctorConsultation.Modules.Admin.Mappings;
 
+/// <summary>
+/// AutoMapper profile for Admin module.
+/// Mapping definitions will be added as Admin API endpoints are implemented.
+/// </summary>
 public class AdminMappingProfile : Profile
 {
     public AdminMappingProfile()
     {
-        CreateMap<AdminUser, object>();
+        // Mappings will be defined here as DTOs are introduced per endpoint.
     }
 }
+

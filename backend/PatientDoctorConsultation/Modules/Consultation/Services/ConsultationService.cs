@@ -32,16 +32,36 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
             .FirstOrDefaultAsync(p => p.UserId == userId, ct)
             ?? throw new NotFoundException("Patient profile not found. Complete your profile before booking.");
 
+        // 1a. Verify the patient's account is still active (admin may have blocked it after JWT was issued)
+        var patientUser = await db.Set<User>()
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        if (patientUser is not null && !patientUser.IsActive)
+        {
+            logger.LogWarning(
+                "[Booking Blocked] Patient account is blocked. UserId={UserId} DoctorId={DoctorId}",
+                userId, request.DoctorId);
+            throw new ForbiddenException("Your account has been suspended. Please contact support.");
+        }
+
         // 2. Resolve target doctor
         var doctor = await db.Set<DoctorModel>()
             .FirstOrDefaultAsync(d => d.Id == request.DoctorId && d.DeletedAt == null, ct)
             ?? throw new NotFoundException($"Doctor with id '{request.DoctorId}' was not found.");
 
         // 3. Doctor must be approved and publicly visible (SDD Rule 1)
-        if (!doctor.IsPubliclyVisible || doctor.ApprovalStatus != ApprovalStatus.Approved)
-            throw DomainValidationException.For(
-                "DoctorId",
-                "This doctor is not currently available for booking.");
+        //    This guard enforces admin moderation — suspended, rejected, or hidden doctors
+        //    are completely blocked from receiving new bookings.
+        //    Returns 409 Conflict because the doctor's business state conflicts with the booking.
+        if (!IsDoctorAvailableForBooking(doctor))
+        {
+            logger.LogWarning(
+                "[Booking Blocked] Patient attempted booking with unavailable doctor. " +
+                "PatientId={PatientId} DoctorId={DoctorId} DoctorStatus={ApprovalStatus} IsPubliclyVisible={IsPubliclyVisible}",
+                patient.Id, doctor.Id, doctor.ApprovalStatus, doctor.IsPubliclyVisible);
+
+            throw new ConflictException("This doctor is not currently available for booking.");
+        }
 
         // 4. ConsultationFee must be set
         if (doctor.ConsultationFee is null or <= 0)
@@ -211,8 +231,7 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         if (consultation.Status != ConsultationStatus.Pending &&
             consultation.Status != ConsultationStatus.Confirmed)
         {
-            throw DomainValidationException.For(
-                "Status",
+            throw new ConflictException(
                 $"Consultation in '{consultation.Status}' state cannot be cancelled. Only Pending or Confirmed consultations can be cancelled.");
         }
 
@@ -280,7 +299,7 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         var (consultation, doctor) = await FetchConsultationForDoctorAsync(consultationId, userId, ct);
 
         if (consultation.Status != ConsultationStatus.Pending)
-            throw DomainValidationException.For("Status", $"Only Pending consultations can be confirmed. Current status: {consultation.Status}.");
+            throw new ConflictException($"Only Pending consultations can be confirmed. Current status: {consultation.Status}.");
 
         var oldStatus = consultation.Status;
         consultation.Status    = ConsultationStatus.Confirmed;
@@ -315,7 +334,7 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         var (consultation, _) = await FetchConsultationForDoctorAsync(consultationId, userId, ct);
 
         if (consultation.Status != ConsultationStatus.Pending)
-            throw DomainValidationException.For("Status", $"Only Pending consultations can be rejected. Current status: {consultation.Status}.");
+            throw new ConflictException($"Only Pending consultations can be rejected. Current status: {consultation.Status}.");
 
         var oldStatus = consultation.Status;
         consultation.Status    = ConsultationStatus.Rejected;
@@ -374,7 +393,7 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         var (consultation, _) = await FetchConsultationForDoctorAsync(consultationId, userId, ct);
 
         if (consultation.Status != ConsultationStatus.Confirmed)
-            throw DomainValidationException.For("Status", $"Only Confirmed consultations can be started. Current status: {consultation.Status}.");
+            throw new ConflictException($"Only Confirmed consultations can be started. Current status: {consultation.Status}.");
 
         var oldStatus = consultation.Status;
         consultation.Status    = ConsultationStatus.InProgress;
@@ -404,7 +423,7 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         var (consultation, doctor) = await FetchConsultationForDoctorAsync(consultationId, userId, ct);
 
         if (consultation.Status != ConsultationStatus.InProgress)
-            throw DomainValidationException.For("Status", $"Only InProgress consultations can be completed. Current status: {consultation.Status}.");
+            throw new ConflictException($"Only InProgress consultations can be completed. Current status: {consultation.Status}.");
 
         var oldStatus = consultation.Status;
         consultation.Status    = ConsultationStatus.Completed;
@@ -624,6 +643,21 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
     // ════════════════════════════════════════════════════════════════════════
     // PRIVATE — ACCESS CONTROL
     // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Central booking eligibility check for a doctor.
+    /// A doctor is bookable only when:
+    ///   • ApprovalStatus == Approved (admin has approved the account)
+    ///   • IsPubliclyVisible == true  (admin has not hidden / suspended the profile)
+    ///   • DeletedAt == null          (profile has not been soft-deleted)
+    ///
+    /// Admin suspension sets ApprovalStatus = Suspended AND IsPubliclyVisible = false,
+    /// so either condition alone would block the booking — both are checked for defense-in-depth.
+    /// </summary>
+    private static bool IsDoctorAvailableForBooking(DoctorModel doctor) =>
+        doctor.DeletedAt == null
+        && doctor.IsPubliclyVisible
+        && doctor.ApprovalStatus == ApprovalStatus.Approved;
 
     private void EnforceAccessControl(ConsultationModel consultation, Guid userId, string userRole)
     {

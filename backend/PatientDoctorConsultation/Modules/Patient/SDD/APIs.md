@@ -349,7 +349,11 @@ GET /api/patients/doctors?city=Pune&specialization=Cardiologist&page=1&pageSize=
 ```
 
 ### Business Rules
-- Returns only doctors where `IsPubliclyVisible = true` AND `ApprovalStatus = Approved`
+- Returns only doctors satisfying ALL three admin-governance conditions:
+  - `IsPubliclyVisible = true` — admin suspension sets this to `false`, immediately removing the doctor from results
+  - `ApprovalStatus = Approved` — pending, rejected, or suspended doctors are never returned
+  - `DeletedAt = null` — soft-deleted profiles are excluded (enforced by EF global query filter + explicit WHERE)
+- **Admin moderation is immediate**: suspending a doctor removes them from all patient search results with zero propagation delay
 - No patient data or medical information is ever included in this response
 - This route is a **patient-scoped proxy** to the Doctor Module's public listing — identical data, different auth context
 - Results are ordered by `Rating` descending, then `City`, then doctor name
@@ -362,4 +366,6 @@ GET /api/patients/doctors?city=Pune&specialization=Cardiologist&page=1&pageSize=
 | `minFee: 5000, maxFee: 100` (inverted range) | `200 OK` with `items: []` (no match) |
 | JWT with role `Doctor` | `403 Forbidden` |
 | `language=Marathi` (no matches) | `200 OK` with `items: []` |
+| Admin suspends previously visible doctor | Doctor disappears from next call — no cache, DB filter enforced |
+| Admin reactivates a suspended doctor | Doctor reappears immediately when `ApprovalStatus = Approved` + `IsPubliclyVisible = true` |
 

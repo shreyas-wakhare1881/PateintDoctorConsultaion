@@ -1,7 +1,10 @@
 using PatientDoctorConsultation.API.Extensions;
 using PatientDoctorConsultation.API.Middleware;
 using PatientDoctorConsultation.API.Hubs;
+using PatientDoctorConsultation.Infrastructure.Persistence.Context;
+using PatientDoctorConsultation.Infrastructure.Persistence.Seed;
 using PatientDoctorConsultation.Shared.Config;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,20 @@ builder.Services.Configure<LiveKitConfig>(
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// ── Database: migrate + seed ──────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILogger<Program>>();
+
+    // Apply any pending EF Core migrations automatically on startup.
+    await db.Database.MigrateAsync();
+
+    // Seed the default admin user (idempotent — skips if already exists).
+    await AdminSeeder.SeedAsync(db, logger);
+}
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();

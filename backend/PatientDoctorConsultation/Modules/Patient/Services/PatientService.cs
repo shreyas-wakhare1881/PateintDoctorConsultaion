@@ -152,11 +152,16 @@ public sealed class PatientService(ApplicationDbContext db, ILogger<PatientServi
         var page     = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, 50);
 
-        // Base query: only publicly visible, approved doctors
+        // Base query: only publicly visible, approved, non-deleted doctors
+        // Defense-in-depth: DeletedAt == null is redundant with the global EF query filter
+        // on DoctorConfiguration, but kept explicit here for governance clarity and
+        // as a safeguard if the global filter is ever bypassed (e.g., IgnoreQueryFilters).
         var baseQuery =
             from d in db.Set<DoctorModel>()
             join u in db.Set<User>() on d.UserId equals u.Id
-            where d.IsPubliclyVisible && d.ApprovalStatus == ApprovalStatus.Approved
+            where d.DeletedAt == null
+               && d.IsPubliclyVisible
+               && d.ApprovalStatus == ApprovalStatus.Approved
             select new { Doctor = d, User = u };
 
         // Optional filters — case-insensitive via ToLower() → translates to lower() in PostgreSQL
