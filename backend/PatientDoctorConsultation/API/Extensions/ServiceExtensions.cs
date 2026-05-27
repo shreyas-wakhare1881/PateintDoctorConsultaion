@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using PatientDoctorConsultation.Infrastructure.Identity.Jwt;
 using PatientDoctorConsultation.Infrastructure.Identity.OTP;
 using PatientDoctorConsultation.Infrastructure.Identity.Passwords;
+using PatientDoctorConsultation.Infrastructure.Realtime.LiveKit;
+using PatientDoctorConsultation.Infrastructure.Realtime.SignalR;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
+using PatientDoctorConsultation.API.Hubs;
 using PatientDoctorConsultation.Modules.Admin.Interfaces;
 using PatientDoctorConsultation.Modules.Admin.Mappings;
 using PatientDoctorConsultation.Modules.Admin.Services;
@@ -20,6 +23,7 @@ using PatientDoctorConsultation.Modules.Doctor.Interfaces;
 using PatientDoctorConsultation.Modules.Doctor.Mappings;
 using PatientDoctorConsultation.Modules.Doctor.Services;
 using PatientDoctorConsultation.Modules.Doctor.Validators;
+using PatientDoctorConsultation.Modules.Shared.Interfaces;
 using PatientDoctorConsultation.Modules.Patient.Interfaces;
 using PatientDoctorConsultation.Modules.Patient.Mappings;
 using PatientDoctorConsultation.Modules.Patient.Services;
@@ -39,12 +43,15 @@ public static class ServiceExtensions
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<IOtpService, OtpService>();
         services.AddSingleton<IPasswordService, PasswordService>();
+        services.AddHttpClient<ILiveKitService, LiveKitService>();
+        services.AddScoped<ISignalRNotificationService, SignalRNotificationService<NotificationHub>>();
 
         // ── Auth module ────────────────────────────────────────────────────────
         services.AddScoped<IAuthService, AuthService>();
 
         // ── Doctor module ──────────────────────────────────────────────────────
         services.AddScoped<IDoctorService, DoctorService>();
+        services.AddScoped<IDoctorStubCreator, DoctorStubCreator>();
 
         // ── Patient module ─────────────────────────────────────────────────────────
         services.AddScoped<IPatientService, PatientService>();

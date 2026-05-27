@@ -20,11 +20,15 @@ import {
   getNotificationHubConnection,
   resetHubConnections,
 } from '@/services/signalr-client';
+import { useSignalRSubscriptions } from '@/hooks/useSignalRSubscriptions';
 import * as signalR from '@microsoft/signalr';
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const mountedRef = useRef(false);
+
+  // Subscribe to SignalR events for query invalidation (no-op if hub is not connected yet)
+  useSignalRSubscriptions();
 
   useEffect(() => {
     mountedRef.current = true;

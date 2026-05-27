@@ -18,9 +18,10 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/auth.store';
 import { apiConfig } from '@/config/api.config';
 import { SessionExpiredModal } from '@/components/auth/session-expired-modal';
+import type { AuthUserDto } from '@/types/auth.types';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { refreshToken, refreshSession, clearSession, setSessionLoading,
+  const { refreshToken, refreshSession, setUser, clearSession, setSessionLoading,
           showSessionExpiredModal, dismissSessionExpired } = useAuthStore();
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await axios.post<{
           success: boolean;
-          data: { accessToken: string; refreshToken: string };
+          data: { accessToken: string; refreshToken: string; user?: AuthUserDto };
         }>(
           `${apiConfig.baseUrl}${apiConfig.endpoints.auth.refresh}`,
           { refreshToken },
@@ -41,8 +42,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (response.data.success && response.data.data) {
-          const { accessToken, refreshToken: newRefresh } = response.data.data;
+          const { accessToken, refreshToken: newRefresh, user } = response.data.data;
           refreshSession(accessToken, newRefresh);
+          if (user) {
+            setUser(user);
+          }
         } else {
           clearSession();
         }

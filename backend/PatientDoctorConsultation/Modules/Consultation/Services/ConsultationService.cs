@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using PatientDoctorConsultation.Infrastructure.Realtime.LiveKit;
+using PatientDoctorConsultation.Infrastructure.Realtime.SignalR;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
 using PatientDoctorConsultation.Modules.Auth.Models;
 using PatientDoctorConsultation.Modules.Consultation.DTOs;
 using PatientDoctorConsultation.Modules.Consultation.Enums;
 using PatientDoctorConsultation.Modules.Consultation.Interfaces;
 using PatientDoctorConsultation.Modules.Consultation.Models;
+using PatientDoctorConsultation.Shared.Config;
 using PatientDoctorConsultation.Shared.Constants;
 using PatientDoctorConsultation.Shared.Enums;
 using PatientDoctorConsultation.Shared.Exceptions;
@@ -16,8 +20,15 @@ using ConsultationModel = PatientDoctorConsultation.Modules.Consultation.Models.
 
 namespace PatientDoctorConsultation.Modules.Consultation.Services;
 
-public sealed class ConsultationService(ApplicationDbContext db, ILogger<ConsultationService> logger) : IConsultationService
+public sealed class ConsultationService(
+    ApplicationDbContext db,
+    ILogger<ConsultationService> logger,
+    ILiveKitService liveKitService,
+    ISignalRNotificationService notificationService,
+    IOptions<LiveKitConfig> liveKitConfig) : IConsultationService
 {
+    private readonly LiveKitConfig _liveKitConfig = liveKitConfig.Value;
+
     // ════════════════════════════════════════════════════════════════════════
     // PATIENT — BOOK CONSULTATION
     // ════════════════════════════════════════════════════════════════════════
@@ -171,6 +182,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
             "Consultation booked. ConsultationNumber={ConsultationNumber} PatientId={PatientId} DoctorId={DoctorId} Type={Type} Date={Date}",
             consultation.ConsultationNumber, patient.Id, request.DoctorId, consultationType, request.ScheduledDate);
 
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.Pending.ToString(), ct);
+
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
 
@@ -255,6 +268,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         logger.LogInformation("Consultation cancelled. ConsultationId={ConsultationId} CancelledBy={CancelledBy}",
             consultationId, cancelledBy);
 
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.Cancelled.ToString(), ct);
+
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
 
@@ -318,6 +333,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         logger.LogInformation("Consultation confirmed. ConsultationId={ConsultationId} DoctorId={DoctorId}",
             consultationId, doctor.Id);
 
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.Confirmed.ToString(), ct);
+
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
 
@@ -344,6 +361,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         await db.SaveChangesAsync(ct);
 
         logger.LogInformation("Consultation rejected. ConsultationId={ConsultationId}", consultationId);
+
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.Rejected.ToString(), ct);
 
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
@@ -407,6 +426,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
 
         logger.LogInformation("Consultation started (InProgress). ConsultationId={ConsultationId}", consultationId);
 
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.InProgress.ToString(), ct);
+
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
 
@@ -443,6 +464,8 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
 
         logger.LogInformation("Consultation completed. ConsultationId={ConsultationId} DoctorId={DoctorId} TotalConsultations={Total}",
             consultationId, doctor.Id, doctor.TotalConsultations);
+
+        await NotifyStatusChangeAsync(consultation, ConsultationStatus.Completed.ToString(), ct);
 
         return await FetchDetailsResponseAsync(consultation.Id, ct);
     }
@@ -494,6 +517,42 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         ).ToListAsync(ct);
 
         return history;
+    }
+
+    public async Task<ConsultationVideoTokenResponse> GenerateVideoTokenAsync(
+        Guid userId,
+        string userRole,
+        Guid consultationId,
+        CancellationToken ct = default)
+    {
+        var consultation = await FetchConsultationAsync(consultationId, ct);
+        EnforceAccessControl(consultation, userId, userRole);
+
+        if (consultation.ConsultationType != ConsultationType.Video)
+            throw new ConflictException("This consultation is not a video session.");
+
+        if (consultation.Status is not (ConsultationStatus.Confirmed or ConsultationStatus.InProgress))
+            throw new ConflictException("Video join is allowed only for Confirmed or InProgress consultations.");
+
+        if (string.IsNullOrWhiteSpace(consultation.MeetingRoomId))
+            throw new ConflictException("Meeting room is not provisioned for this consultation yet.");
+
+        var user = await db.Set<User>().FirstOrDefaultAsync(u => u.Id == userId, ct)
+            ?? throw new NotFoundException("User not found.");
+
+        var participantIdentity = $"{userRole.ToLowerInvariant()}-{userId:N}";
+        var accessToken = liveKitService.GenerateAccessToken(
+            consultation.MeetingRoomId,
+            participantIdentity,
+            user.FullName);
+
+        return new ConsultationVideoTokenResponse(
+            ConsultationId: consultation.Id,
+            MeetingRoomId: consultation.MeetingRoomId,
+            AccessToken: accessToken,
+            LiveKitUrl: _liveKitConfig.Host,
+            ParticipantIdentity: participantIdentity,
+            ExpiresAt: DateTime.UtcNow.AddHours(2));
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -771,6 +830,49 @@ public sealed class ConsultationService(ApplicationDbContext db, ILogger<Consult
         public string? DoctorSpecialization { get; init; }
         public string? DoctorProfileImageUrl { get; init; }
         public string PatientName { get; init; } = string.Empty;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // PRIVATE — REALTIME NOTIFICATION
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Push a ConsultationStatusChanged event to both the patient and doctor user
+    /// via the NotificationHub. Best-effort — failures are logged but do not break the workflow.
+    /// </summary>
+    private async Task NotifyStatusChangeAsync(ConsultationModel consultation, string newStatus, CancellationToken ct)
+    {
+        try
+        {
+            // Resolve user IDs from profile IDs
+            var patientUserId = await db.Set<PatientModel>()
+                .Where(p => p.Id == consultation.PatientId)
+                .Select(p => p.UserId)
+                .FirstOrDefaultAsync(ct);
+
+            var doctorUserId = await db.Set<DoctorModel>()
+                .Where(d => d.Id == consultation.DoctorId)
+                .Select(d => d.UserId)
+                .FirstOrDefaultAsync(ct);
+
+            var payload = new
+            {
+                consultationId = consultation.Id,
+                status = newStatus,
+                consultationNumber = consultation.ConsultationNumber,
+                updatedAt = DateTime.UtcNow
+            };
+
+            if (patientUserId != Guid.Empty)
+                await notificationService.SendToUserAsync(patientUserId.ToString(), "ConsultationStatusChanged", payload, ct);
+
+            if (doctorUserId != Guid.Empty)
+                await notificationService.SendToUserAsync(doctorUserId.ToString(), "ConsultationStatusChanged", payload, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send ConsultationStatusChanged notification for ConsultationId={ConsultationId}", consultation.Id);
+        }
     }
 }
 

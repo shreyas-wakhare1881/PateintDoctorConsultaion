@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { ROUTES } from '@/config/routes';
+import { ROUTES, ROLE_DASHBOARD } from '@/config/routes';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
 import { parseApiError } from '@/utils/errors';
@@ -40,13 +40,13 @@ export default function AdminLoginPage() {
   useEffect(() => { setValue('role', 'Admin'); }, [setValue]);
 
   useEffect(() => {
-    if (!isSessionLoading && isAuthenticated && user?.role === 'Admin') {
-      router.replace(ROUTES.admin.dashboard);
+    if (!isSessionLoading && isAuthenticated && user) {
+      router.replace(ROLE_DASHBOARD[user.role] ?? ROUTES.admin.dashboard);
     }
   }, [isAuthenticated, isSessionLoading, user, router]);
 
   if (isSessionLoading) return <SessionLoader />;
-  if (isAuthenticated && user?.role === 'Admin') return null;
+  if (isAuthenticated) return null;
 
   const onSubmit = async (data: CredentialLoginInput) => {
     setBannerError(null);

@@ -65,10 +65,20 @@ export default function DoctorLoginPage() {
       login(authUser, accessToken, refreshToken);
       analytics.loginSuccess('credential', authUser.id);
 
-      // Route by doctor approval status
+      // Route by profile completion first, then approval status
       try {
         const profileRes = await apiClient.get(apiConfig.endpoints.doctors.me);
-        const approvalStatus: string = (profileRes.data as { data?: { approvalStatus?: string } })?.data?.approvalStatus ?? 'Pending';
+        const profile = (profileRes.data as { data?: { approvalStatus?: string; isProfileCompleted?: boolean } })?.data;
+        const approvalStatus: string = profile?.approvalStatus ?? 'Pending';
+        const isProfileCompleted: boolean = profile?.isProfileCompleted ?? false;
+
+        toast.success('Welcome back!');
+
+        // isProfileCompleted=false → must complete setup before anything else
+        if (!isProfileCompleted) {
+          router.replace(ROUTES.doctor.setup);
+          return;
+        }
 
         const statusRoutes: Record<string, string> = {
           Approved: ROUTES.doctor.dashboard,
@@ -77,10 +87,17 @@ export default function DoctorLoginPage() {
           Suspended: ROUTES.doctor.suspended,
         };
 
-        toast.success('Welcome back!');
         router.replace(statusRoutes[approvalStatus] ?? ROUTES.doctor.pending);
-      } catch {
-        router.replace(ROUTES.doctor.pending);
+      } catch (profileErr: unknown) {
+        // 404 = no Doctor row yet (profile setup not started) → go to setup
+        const httpStatus = (profileErr as { response?: { status?: number } })?.response?.status;
+        if (httpStatus === 404) {
+          toast.success('Welcome! Please complete your profile.');
+          router.replace(ROUTES.doctor.setup);
+        } else {
+          // Any other error (network, 500, etc.) → default to pending as safe fallback
+          router.replace(ROUTES.doctor.pending);
+        }
       }
     } catch (err) {
       const parsed = parseApiError(err);

@@ -1,12 +1,13 @@
-import type { ConsultationDto } from '../types/consultation.types';
+import type { ConsultationDetailsDto, ConsultationStatus } from '../types/consultation.types';
 
 export const consultationService = {
-  isJoinable: (consultation: ConsultationDto): boolean =>
+  isJoinable: (consultation: ConsultationDetailsDto): boolean =>
     consultation.status === 'Confirmed' || consultation.status === 'InProgress',
-  getStatusLabel: (status: ConsultationDto['status']): string => {
-    const map: Record<ConsultationDto['status'], string> = {
+  getStatusLabel: (status: ConsultationStatus): string => {
+    const map: Record<ConsultationStatus, string> = {
       Pending: 'Pending',
       Confirmed: 'Confirmed',
+      Rejected: 'Rejected',
       InProgress: 'In Progress',
       Completed: 'Completed',
       Cancelled: 'Cancelled',

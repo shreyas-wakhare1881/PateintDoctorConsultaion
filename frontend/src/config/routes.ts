@@ -3,12 +3,14 @@
  * Source of truth: frontend/SDD/auth.md — Route Structure tables.
  *
  * Patient-first architecture (v2):
- *  - /login          → Patient OTP login (default entry point)
+ *  - /patient/login  → Patient OTP login (primary entry point)
  *  - /verify-otp     → OTP verification
  *  - /doctor         → Doctor landing page (public)
  *  - /doctor/login   → Doctor credential login
  *  - /doctor/register→ Doctor registration
  *  - /admin/login    → Admin portal (hidden, internal only)
+ *
+ * Legacy route: /login → redirects to /patient/login (backwards compat only)
  *
  * Use these constants everywhere instead of hardcoded strings.
  */
@@ -18,25 +20,29 @@ export const ROUTES = {
   home: '/',
 
   // ── Patient Auth (primary entry) ───────────────────────────────────────────
-  login: '/login',
+  /** Canonical patient login URL — /patient/login */
+  login: '/patient/login',
   verifyOtp: '/verify-otp',
+  /** Legacy /login → redirects to /patient/login (do not use in new code) */
+  loginLegacy: '/login',
 
   // ── Auth (legacy aliases — redirect to new routes) ─────────────────────────
   auth: {
     /** @deprecated use ROUTES.login */
-    patientLogin: '/login',
+    patientLogin: '/patient/login',
     /** @deprecated use ROUTES.verifyOtp */
     patientOtp: '/verify-otp',
     /** @deprecated use ROUTES.doctor.login */
     login: '/doctor/login',
     /** @deprecated use ROUTES.doctor.register */
     register: '/doctor/register',
-    /** @deprecated removed — redirects to /login */
-    role: '/login',
+    /** @deprecated use / directly; /role is legacy role-redirect route */
+    role: '/role',
   },
 
   // ── Patient ────────────────────────────────────────────────────────────────
   patient: {
+    login: '/patient/login',
     setup: '/patient/setup',
     dashboard: '/patient/dashboard',
     profile: '/patient/profile',
@@ -77,6 +83,7 @@ export const ROUTES = {
 
   // ── Admin ──────────────────────────────────────────────────────────────────
   admin: {
+    login: '/admin/login',
     dashboard: '/admin/dashboard',
     doctors: '/admin/doctors',
     doctorsPending: '/admin/doctors/pending',
@@ -102,5 +109,12 @@ export const ROLE_DASHBOARD: Record<string, string> = {
   Admin: ROUTES.admin.dashboard,
 };
 
-/** Default unauthenticated redirect target — patient-first: /login */
+/** Role-to-login redirect map — used by guards and session-expired modal. */
+export const ROLE_LOGIN: Record<string, string> = {
+  Patient: ROUTES.patient.login,
+  Doctor: ROUTES.doctor.login,
+  Admin: ROUTES.admin.login,
+};
+
+/** Default unauthenticated redirect target — /patient/login */
 export const UNAUTHENTICATED_REDIRECT = ROUTES.login;

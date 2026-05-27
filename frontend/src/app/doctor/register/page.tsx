@@ -108,17 +108,26 @@ export default function DoctorRegisterPage() {
                 <AuthIllustration type="pending" className="w-28 h-28" />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 text-xs font-medium px-3 py-1 rounded-full mb-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Application Submitted
+              <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full mb-4">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Account Created
               </div>
 
-              <h1 className="text-xl font-bold text-foreground">Application Under Review</h1>
+              <h1 className="text-xl font-bold text-foreground">Almost There!</h1>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Thank you for applying! Our team reviews all doctor applications
-                within <strong>1–2 business days</strong>. You'll receive an email
-                once your application is reviewed.
+                Your account has been created. <strong>One more step:</strong> log in and complete
+                your professional profile — your specialization, license number, qualifications,
+                and experience — so our admin team can review your application.
               </p>
+
+              <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-left">
+                <p className="text-xs font-semibold text-amber-800 mb-1">Next steps</p>
+                <ol className="space-y-1 text-xs text-amber-700 list-none">
+                  <li>① Log in with your new credentials</li>
+                  <li>② Fill in your professional details (license, specialization…)</li>
+                  <li>③ Wait for admin approval (1–2 business days)</li>
+                </ol>
+              </div>
 
               <div className="mt-6 flex flex-col gap-2">
                 <Link
@@ -126,7 +135,7 @@ export default function DoctorRegisterPage() {
                   className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold
                     flex items-center justify-center hover:bg-primary/90 transition-colors"
                 >
-                  Go to Doctor Login
+                  Login &amp; Complete Profile →
                 </Link>
                 <Link
                   href={ROUTES.doctor.landing}

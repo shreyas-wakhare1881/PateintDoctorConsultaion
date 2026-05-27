@@ -1,13 +1,30 @@
 'use client';
 
-import Link from 'next/link';
-import { BrandMark } from '@/components/auth/brand-mark';
+/**
+ * Doctor Rejected Screen
+ * Source of truth: frontend/SDD/doctor.md §6.4 Rejected Screen
+ * Polls status every 60s — if admin reactivates, auto-redirects.
+ */
 
-export default function DoctorRejectedPage() {
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { BrandMark } from '@/components/auth/brand-mark';
+import { DoctorGuard } from '@/guards/doctor.guard';
+import { useDoctorPendingPoller } from '@/modules/doctor/hooks/useDoctor';
+import { useAuthStore } from '@/store/auth.store';
+import { ROUTES } from '@/config/routes';
+
+function DoctorRejectedPageContent() {
+  useDoctorPendingPoller('Rejected');
+  const { logout } = useAuthStore();
+  const router = useRouter();
+  const handleLogout = () => { logout(); router.replace(ROUTES.doctor.login); };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-slate-50 flex flex-col">
-      <header className="flex items-center px-6 py-4 max-w-5xl mx-auto w-full">
+      <header className="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full">
         <BrandMark size="sm" />
+        <button type="button" onClick={handleLogout} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Sign Out</button>
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
@@ -60,14 +77,22 @@ export default function DoctorRejectedPage() {
               Appeal or Contact Support
             </Link>
             <Link
-              href="/auth/register"
+              href={ROUTES.doctor.profileEdit}
               className="w-full h-11 rounded-xl border border-border text-sm text-muted-foreground flex items-center justify-center hover:bg-muted/40 transition-colors"
             >
-              Re-apply with Updated Info
+              Update Profile and Re-Apply
             </Link>
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DoctorRejectedPage() {
+  return (
+    <DoctorGuard>
+      <DoctorRejectedPageContent />
+    </DoctorGuard>
   );
 }

@@ -11,12 +11,6 @@ export type ConsultationStatus =
 export interface ActiveConsultation {
   id: string;
   roomId: string;
-  doctorId: string;
-  patientId: string;
-  doctorName: string;
-  patientName: string;
-  status: ConsultationStatus;
-  scheduledAt: string;
 }
 
 interface ConsultationState {

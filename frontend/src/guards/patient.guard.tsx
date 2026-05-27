@@ -1,11 +1,9 @@
-'use client';
-
 /**
  * PatientGuard — restricts route to role=Patient only.
  * Source of truth: frontend/SDD/auth.md — Redirect matrix
  *
  * Redirect rules:
- *  - Unauthenticated → /login
+ *  - Unauthenticated → /patient/login
  *  - Doctor → /doctor/dashboard
  *  - Admin → /admin/dashboard
  */
@@ -13,7 +11,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
-import { UNAUTHENTICATED_REDIRECT, ROLE_DASHBOARD } from '@/config/routes';
+import { ROUTES, ROLE_DASHBOARD } from '@/config/routes';
 import { SessionLoader } from '@/components/shared/session-loader';
 
 export function PatientGuard({ children }: { children: React.ReactNode }) {
@@ -23,11 +21,11 @@ export function PatientGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isSessionLoading) return;
     if (!isAuthenticated) {
-      router.replace(UNAUTHENTICATED_REDIRECT);
+      router.replace(ROUTES.patient.login);
       return;
     }
     if (user?.role !== 'Patient') {
-      router.replace(ROLE_DASHBOARD[user!.role] ?? UNAUTHENTICATED_REDIRECT);
+      router.replace(ROLE_DASHBOARD[user!.role] ?? ROUTES.login);
     }
   }, [isAuthenticated, isSessionLoading, user, router]);
 

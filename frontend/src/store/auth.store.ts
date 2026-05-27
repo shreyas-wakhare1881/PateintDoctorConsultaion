@@ -26,6 +26,8 @@ interface AuthState {
   isAuthenticated: boolean;
   /** True while splash screen is checking session / calling refresh endpoint. */
   isSessionLoading: boolean;
+  /** Captures role at expiry time so modal can redirect to the correct login route. */
+  sessionExpiredRole: UserRole | null;
   /**
    * True when the Axios interceptor detects a mid-session 401 after refresh fails.
    * Triggers the SessionExpiredModal. Cleared when modal redirects to /login.
@@ -104,31 +106,39 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isSessionLoading: true,
       showSessionExpiredModal: false,
+      sessionExpiredRole: null,
 
       login: (user, accessToken, refreshToken) => {
         setSessionCookie();
-        set({ user, accessToken, refreshToken, isAuthenticated: true, isSessionLoading: false, showSessionExpiredModal: false });
+        set({ user, accessToken, refreshToken, isAuthenticated: true, isSessionLoading: false, showSessionExpiredModal: false, sessionExpiredRole: null });
       },
 
       logout: () => {
         clearAllAppState();
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isSessionLoading: false, showSessionExpiredModal: false });
+        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isSessionLoading: false, showSessionExpiredModal: false, sessionExpiredRole: null });
       },
 
       /** Called after a successful token refresh — updates tokens and marks session as active. */
       refreshSession: (accessToken, refreshToken) => {
         setSessionCookie();
-        set({ accessToken, refreshToken, isAuthenticated: true });
+        set({ accessToken, refreshToken, isAuthenticated: true, sessionExpiredRole: null });
       },
 
       clearSession: () => {
         clearAllAppState();
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isSessionLoading: false });
+        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isSessionLoading: false, showSessionExpiredModal: false, sessionExpiredRole: null });
       },
 
       triggerSessionExpired: () => {
         clearAllAppState();
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, showSessionExpiredModal: true });
+        set((state) => ({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          showSessionExpiredModal: true,
+          sessionExpiredRole: state.user?.role ?? null,
+        }));
       },
 
       dismissSessionExpired: () =>

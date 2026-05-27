@@ -1,15 +1,48 @@
 'use client';
 
+/**
+ * Doctor Pending Approval Screen
+ * Route: /doctor/pending
+ * Source of truth: frontend/SDD/doctor.md §6.3 Pending Approval Screen
+ *
+ * - Polls GET /api/doctors/profile/me every 60s
+ * - Auto-redirects if status changes to Approved/Rejected/Suspended
+ * - Static UI preserved; polling wired via useDoctorPendingPoller
+ */
+
 import Link from 'next/link';
 import { AuthIllustration } from '@/components/auth/auth-illustration';
 import { BrandMark } from '@/components/auth/brand-mark';
+import { DoctorGuard } from '@/guards/doctor.guard';
+import { useDoctorPendingPoller } from '@/modules/doctor/hooks/useDoctor';
+import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/config/routes';
 
-export default function DoctorPendingPage() {
+function DoctorPendingPageContent() {
+  // Wire the polling — auto-redirects when status changes
+  useDoctorPendingPoller('Pending');
+
+  const { logout } = useAuthStore();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.replace(ROUTES.doctor.login);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-teal-50 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full">
         <BrandMark size="sm" />
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Sign Out
+        </button>
       </header>
 
       {/* Content */}
@@ -29,7 +62,7 @@ export default function DoctorPendingPage() {
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed mb-6">
             Your doctor registration is being reviewed by our admin team.
-            This typically takes <strong>1–2 business days</strong>. We'll
+            This typically takes <strong>1–2 business days</strong>. We&apos;ll
             notify you once a decision is made.
           </p>
 
@@ -52,9 +85,13 @@ export default function DoctorPendingPage() {
             ))}
           </div>
 
+          <p className="text-xs text-muted-foreground mb-4">
+            This page automatically checks your status every 60 seconds.
+          </p>
+
           <div className="flex flex-col gap-2">
             <Link
-              href="/auth/login?role=Doctor"
+              href={ROUTES.doctor.login}
               className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center hover:bg-primary/90 transition-colors"
             >
               Check Status Again
@@ -71,3 +108,12 @@ export default function DoctorPendingPage() {
     </div>
   );
 }
+
+export default function DoctorPendingPage() {
+  return (
+    <DoctorGuard>
+      <DoctorPendingPageContent />
+    </DoctorGuard>
+  );
+}
+

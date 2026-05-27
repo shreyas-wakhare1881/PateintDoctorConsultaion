@@ -31,52 +31,84 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
         if (user.Role != UserRole.Doctor)
             throw new UnauthorizedException("Only Doctor role accounts can create a doctor profile.");
 
-        // 2. Enforce one-profile-per-user constraint
-        var profileExists = await db.Set<DoctorModel>()
-            .AnyAsync(d => d.UserId == userId, ct);
+        // 2. Find existing stub (created automatically at registration per SDD Flow §1)
+        var existingStub = await db.Set<DoctorModel>()
+            .FirstOrDefaultAsync(d => d.UserId == userId, ct);
 
-        if (profileExists)
-            throw new ConflictException("A doctor profile already exists for this account.");
+        // 2a. If profile is already fully completed, disallow re-submission (409)
+        if (existingStub is not null && existingStub.IsProfileCompleted)
+            throw new ConflictException("Doctor profile is already completed. Use PATCH /api/doctors/profile/me to update.");
 
-        // 3. License number must be globally unique
+        // 3. License number must be globally unique (exclude self when updating stub)
+        var selfId = existingStub?.Id ?? Guid.Empty;
         var licenseExists = await db.Set<DoctorModel>()
-            .AnyAsync(d => d.LicenseNumber == request.LicenseNumber.Trim(), ct);
+            .AnyAsync(d => d.LicenseNumber == request.LicenseNumber.Trim() && d.Id != selfId, ct);
 
         if (licenseExists)
             throw new ConflictException($"License number '{request.LicenseNumber}' is already registered on the platform.");
 
-        // 4. Build entity
-        var doctor = new DoctorModel
-        {
-            UserId              = userId,
-            Specialization      = request.Specialization.Trim(),
-            Qualification       = request.Qualification.Trim(),
-            ExperienceYears     = request.ExperienceYears,
-            LicenseNumber       = request.LicenseNumber.Trim(),
-            Bio                 = request.Bio?.Trim(),
-            ProfileImageUrl     = request.ProfileImageUrl?.Trim(),
-            ConsultationFee     = request.ConsultationFee,
-            HospitalName        = request.HospitalName?.Trim(),
-            ClinicAddress       = request.ClinicAddress?.Trim(),
-            City                = request.City.Trim(),
-            State               = request.State?.Trim(),
-            Country             = request.Country?.Trim(),
-            LanguagesSpoken     = NormalizeLanguages(request.LanguagesSpoken),
-            ApprovalStatus      = ApprovalStatus.Pending,
-            IsProfileCompleted  = false,
-            IsPubliclyVisible   = false,
-            TotalReviews        = 0,
-            TotalConsultations  = 0,
-            CreatedAt           = DateTime.UtcNow
-        };
+        DoctorModel doctor;
 
-        // 5. Evaluate completeness
+        if (existingStub is not null)
+        {
+            // 4a. UPDATE existing stub — doctor registered first, now completing profile
+            doctor = existingStub;
+            doctor.Specialization      = request.Specialization.Trim();
+            doctor.Qualification       = request.Qualification.Trim();
+            doctor.ExperienceYears     = request.ExperienceYears;
+            doctor.LicenseNumber       = request.LicenseNumber.Trim();
+            doctor.Bio                 = request.Bio?.Trim();
+            doctor.ProfileImageUrl     = request.ProfileImageUrl?.Trim();
+            doctor.ConsultationFee     = request.ConsultationFee;
+            doctor.HospitalName        = request.HospitalName?.Trim();
+            doctor.ClinicAddress       = request.ClinicAddress?.Trim();
+            doctor.City                = request.City.Trim();
+            doctor.State               = request.State?.Trim();
+            doctor.Country             = request.Country?.Trim();
+            doctor.LanguagesSpoken     = NormalizeLanguages(request.LanguagesSpoken);
+            doctor.UpdatedAt           = DateTime.UtcNow;
+
+            logger.LogInformation("Doctor profile stub updated during setup. UserId={UserId}", userId);
+        }
+        else
+        {
+            // 4b. CREATE new row — fallback path (stub was not created at registration)
+            doctor = new DoctorModel
+            {
+                UserId              = userId,
+                Specialization      = request.Specialization.Trim(),
+                Qualification       = request.Qualification.Trim(),
+                ExperienceYears     = request.ExperienceYears,
+                LicenseNumber       = request.LicenseNumber.Trim(),
+                Bio                 = request.Bio?.Trim(),
+                ProfileImageUrl     = request.ProfileImageUrl?.Trim(),
+                ConsultationFee     = request.ConsultationFee,
+                HospitalName        = request.HospitalName?.Trim(),
+                ClinicAddress       = request.ClinicAddress?.Trim(),
+                City                = request.City.Trim(),
+                State               = request.State?.Trim(),
+                Country             = request.Country?.Trim(),
+                LanguagesSpoken     = NormalizeLanguages(request.LanguagesSpoken),
+                ApprovalStatus      = ApprovalStatus.Pending,
+                IsProfileCompleted  = false,
+                IsPubliclyVisible   = false,
+                TotalReviews        = 0,
+                TotalConsultations  = 0,
+                CreatedAt           = DateTime.UtcNow
+            };
+            db.Set<DoctorModel>().Add(doctor);
+
+            logger.LogInformation("Doctor profile created (no prior stub). UserId={UserId}", userId);
+        }
+
+        // 5. Evaluate completeness after all fields are set
         doctor.IsProfileCompleted = EvaluateProfileCompleted(doctor);
 
-        db.Set<DoctorModel>().Add(doctor);
         await db.SaveChangesAsync(ct);
 
-        logger.LogInformation("Doctor profile created. UserId={UserId}", userId);
+        logger.LogInformation(
+            "Doctor profile setup complete. UserId={UserId} IsProfileCompleted={Completed}",
+            userId, doctor.IsProfileCompleted);
 
         return BuildDoctorProfileResponse(doctor, user);
     }
@@ -132,6 +164,11 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
 
         // Re-evaluate profile completeness and public visibility
         doctor.IsProfileCompleted = EvaluateProfileCompleted(doctor);
+
+        // Rejected doctors are re-submitted for moderation once profile updates are complete.
+        if (doctor.ApprovalStatus == ApprovalStatus.Rejected && doctor.IsProfileCompleted)
+            doctor.ApprovalStatus = ApprovalStatus.Pending;
+
         doctor.IsPubliclyVisible  = doctor.ApprovalStatus == ApprovalStatus.Approved && doctor.IsProfileCompleted;
         doctor.UpdatedAt          = DateTime.UtcNow;
 

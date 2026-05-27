@@ -299,6 +299,29 @@ public class ConsultationController(IConsultationService consultationService) : 
     }
 
     // ════════════════════════════════════════════════════════════════════════
+    // SHARED — ISSUE VIDEO TOKEN (PATIENT/DOCTOR OWNERS ONLY)
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Issues a short-lived LiveKit access token for an authorized consultation participant.
+    /// Only Patient/Doctor participants of the consultation may request this token.
+    /// </summary>
+    [HttpPost("{id:guid}/video-token")]
+    [Authorize(Roles = $"{Roles.Patient},{Roles.Doctor}")]
+    [ProducesResponseType(typeof(ApiResponse<ConsultationVideoTokenResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> GenerateVideoToken(Guid id, CancellationToken ct)
+    {
+        var userId   = ExtractUserId();
+        var userRole = ExtractUserRole();
+        var result   = await consultationService.GenerateVideoTokenAsync(userId, userRole, id, ct);
+        return Ok(ApiResponse<ConsultationVideoTokenResponse>.Ok(result));
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
     // ADMIN — GET ALL CONSULTATIONS
     // ════════════════════════════════════════════════════════════════════════
 

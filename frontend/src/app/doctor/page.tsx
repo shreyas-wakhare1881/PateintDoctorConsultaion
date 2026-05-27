@@ -68,7 +68,7 @@ export default function DoctorLandingPage() {
       <nav className="flex items-center justify-between px-5 py-4 sm:px-8">
         <BrandMark size="sm" />
         <Link
-          href={ROUTES.auth.patientLogin}
+          href={ROUTES.patient.login}
           className="text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           ← Patient Login
@@ -111,7 +111,7 @@ export default function DoctorLandingPage() {
           className="mb-10 flex flex-col gap-3 sm:flex-row"
         >
           <Link
-            href={ROUTES.auth.login}
+            href={ROUTES.doctor.login}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_2px_8px_-2px_hsl(174_62%_37%_/_0.35)] transition-all hover:bg-primary/90 active:scale-[0.98]"
           >
             Doctor Sign In
@@ -120,7 +120,7 @@ export default function DoctorLandingPage() {
             </svg>
           </Link>
           <Link
-            href={ROUTES.auth.register}
+            href={ROUTES.doctor.register}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary bg-transparent text-sm font-semibold text-primary transition-all hover:bg-primary/6 active:scale-[0.98]"
           >
             Create Account

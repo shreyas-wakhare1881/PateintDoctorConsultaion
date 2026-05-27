@@ -145,6 +145,9 @@ public sealed class AdminService(
         if (doctor.ApprovalStatus is not (ApprovalStatus.Pending or ApprovalStatus.Rejected))
             throw new ConflictException($"Doctor is currently '{doctor.ApprovalStatus}' and cannot be approved from this state.");
 
+        if (!doctor.IsProfileCompleted)
+            throw new ConflictException("Doctor profile is incomplete and cannot be approved.");
+
         var previous = doctor.ApprovalStatus;
         doctor.ApprovalStatus    = ApprovalStatus.Approved;
         doctor.IsPubliclyVisible = doctor.IsProfileCompleted;

@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 // Toast notifications are handled at the component level using the ToastProvider.
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
-import { ROUTES, ROLE_DASHBOARD } from '@/config/routes';
+import { ROUTES, ROLE_DASHBOARD, ROLE_LOGIN } from '@/config/routes';
 import { parseApiError } from '@/utils/errors';
 import type {
   SendOtpRequest,
@@ -86,6 +86,7 @@ export function useAuth() {
   // ── Logout ────────────────────────────────────────────────────────────────
 
   const logout = useCallback(async () => {
+    const roleBeforeLogout = store.user?.role;
     try {
       // Pass current refreshToken so backend can revoke it.
       // If none (already expired), backend call will fail — we still clear locally.
@@ -94,8 +95,7 @@ export function useAuth() {
       // Even if API call fails, clear local session.
     } finally {
       store.logout();
-      // Redirect to canonical login entry — not the deprecated auth.role alias.
-      router.replace(ROUTES.login);
+      router.replace(ROLE_LOGIN[roleBeforeLogout ?? 'Patient'] ?? ROUTES.login);
     }
   }, [store, router]);
 

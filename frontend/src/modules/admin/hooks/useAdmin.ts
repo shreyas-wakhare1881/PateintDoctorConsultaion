@@ -7,6 +7,7 @@ export const ADMIN_QUERY_KEYS = {
   pendingDoctors: ['admin', 'doctors', 'pending'] as const,
   patients: (params?: unknown) => ['admin', 'patients', params] as const,
   consultations: (params?: unknown) => ['admin', 'consultations', params] as const,
+  consultationById: (id: string) => ['admin', 'consultation', id] as const,
   auditLogs: (params?: unknown) => ['admin', 'audit-logs', params] as const,
 };
 
@@ -26,14 +27,20 @@ export const useAdminPendingDoctors = () =>
   useQuery({
     queryKey: ADMIN_QUERY_KEYS.pendingDoctors,
     queryFn: () => adminApi.getPendingDoctors().then((r) => r.data.data),
+    // Refresh every 30 seconds to pick up newly registered doctors
+    refetchInterval: 30_000,
   });
 
-/** Approve a pending doctor. Invalidates the doctors list on success. */
+/** Approve a pending doctor. Invalidates both all-doctors and pending-doctors lists. */
 export const useApproveDoctor = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (doctorId: string) => adminApi.approveDoctor(doctorId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'doctors'] }),
+    mutationFn: ({ doctorId, reason }: { doctorId: string; reason?: string }) =>
+      adminApi.approveDoctor(doctorId, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'doctors'] });
+      qc.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.dashboard });
+    },
   });
 };
 
@@ -43,7 +50,10 @@ export const useRejectDoctor = () => {
   return useMutation({
     mutationFn: ({ doctorId, reason }: { doctorId: string; reason: string }) =>
       adminApi.rejectDoctor(doctorId, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'doctors'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'doctors'] });
+      qc.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.dashboard });
+    },
   });
 };
 
@@ -53,7 +63,10 @@ export const useSuspendDoctor = () => {
   return useMutation({
     mutationFn: ({ doctorId, reason }: { doctorId: string; reason: string }) =>
       adminApi.suspendDoctor(doctorId, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'doctors'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'doctors'] });
+      qc.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.dashboard });
+    },
   });
 };
 
@@ -61,8 +74,12 @@ export const useSuspendDoctor = () => {
 export const useReactivateDoctor = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (doctorId: string) => adminApi.reactivateDoctor(doctorId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'doctors'] }),
+    mutationFn: ({ doctorId, reason }: { doctorId: string; reason?: string }) =>
+      adminApi.reactivateDoctor(doctorId, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'doctors'] });
+      qc.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.dashboard });
+    },
   });
 };
 
@@ -93,6 +110,13 @@ export const useAdminConsultations = (params?: Record<string, unknown>) =>
   useQuery({
     queryKey: ADMIN_QUERY_KEYS.consultations(params),
     queryFn: () => adminApi.getConsultations(params).then((r) => r.data.data),
+  });
+
+export const useAdminConsultationById = (id: string) =>
+  useQuery({
+    queryKey: ADMIN_QUERY_KEYS.consultationById(id),
+    queryFn: () => adminApi.getConsultationById(id).then((r) => r.data.data),
+    enabled: !!id,
   });
 
 export const useAdminAuditLogs = (params?: Record<string, unknown>) =>

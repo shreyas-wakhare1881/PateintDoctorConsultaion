@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import axios from 'axios';
-import { ROUTES } from '@/config/routes';
+import { ROUTES, ROLE_DASHBOARD } from '@/config/routes';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
 import { apiClient } from '@/services/api-client';
@@ -37,7 +37,7 @@ import { getAuthError } from '@/config/auth-errors';
 import { useAuthAnalytics } from '@/hooks/useAuthAnalytics';
 
 export default function VerifyOtpPage() {
-  const { isAuthenticated, isSessionLoading, login } = useAuthStore();
+  const { isAuthenticated, isSessionLoading, login, user } = useAuthStore();
   const router = useRouter();
   const analytics = useAuthAnalytics();
 
@@ -93,10 +93,10 @@ export default function VerifyOtpPage() {
   // Skip this effect if handleVerify just called login() — it manages its own routing.
   useEffect(() => {
     if (isSessionLoading || didVerifyRef.current) return;
-    if (isAuthenticated) {
-      router.replace(ROUTES.patient.dashboard);
+    if (isAuthenticated && user) {
+      router.replace(ROLE_DASHBOARD[user.role] ?? ROUTES.patient.dashboard);
     }
-  }, [isAuthenticated, isSessionLoading, router]);
+  }, [isAuthenticated, isSessionLoading, user, router]);
 
   const handleVerify = useCallback(async (otpValue: string) => {
     // Guard: phone must be populated from sessionStorage before we can call the backend.

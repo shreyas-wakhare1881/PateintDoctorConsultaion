@@ -1,3 +1,3 @@
-﻿import { redirect } from 'next/navigation'
-export default function PatientLoginRedirect() { redirect('/login') }
+﻿import { redirect } from 'next/navigation';
+export default function PatientLoginRedirect() { redirect('/patient/login'); }
 

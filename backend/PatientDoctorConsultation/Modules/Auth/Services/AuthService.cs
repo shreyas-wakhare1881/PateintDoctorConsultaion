@@ -10,6 +10,7 @@ using PatientDoctorConsultation.Infrastructure.Persistence.Context;
 using PatientDoctorConsultation.Modules.Auth.DTOs;
 using PatientDoctorConsultation.Modules.Auth.Interfaces;
 using PatientDoctorConsultation.Modules.Auth.Models;
+using PatientDoctorConsultation.Modules.Shared.Interfaces;
 using PatientDoctorConsultation.Shared.Constants;
 using PatientDoctorConsultation.Shared.Enums;
 using PatientDoctorConsultation.Shared.Exceptions;
@@ -22,7 +23,8 @@ public sealed class AuthService(
     IOtpService otpService,
     IPasswordService passwordService,
     IMapper mapper,
-    ILogger<AuthService> logger) : IAuthService
+    ILogger<AuthService> logger,
+    IDoctorStubCreator doctorStubCreator) : IAuthService
 {
     // ──────────────────────────────────────────────────────────────────────────
     // REGISTER
@@ -94,6 +96,14 @@ public sealed class AuthService(
         db.Set<User>().Add(user);
 
         await db.SaveChangesAsync(ct);
+
+        // SDD Flow §1 — Doctor Onboarding:
+        // After the User row is committed, create a pending Doctor stub so that
+        // GET /api/doctors/profile/me returns a valid (incomplete) profile on first login.
+        if (role == UserRole.Doctor)
+        {
+            await doctorStubCreator.CreateStubAsync(user.Id, ct);
+        }
 
         logger.LogInformation("New {Role} account registered. UserId={UserId}", role, user.Id);
 

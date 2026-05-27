@@ -12,9 +12,9 @@
  *
  * What this middleware does:
  *  1. Passes public routes through unconditionally.
- *  2. Redirects unauthenticated requests to /login for all protected paths.
+ *  2. Redirects unauthenticated requests to role-appropriate login routes.
  *  3. Redirects already-authenticated users away from auth pages to /role
- *     (the role-aware redirect page), preventing duplicate auth entry.
+ *     (legacy role-dispatch route), preventing duplicate auth entry.
  *
  * What this middleware does NOT do:
  *  - Role enforcement (handled by client guards).
@@ -73,11 +73,18 @@ const PROTECTED_PREFIXES = [
 // ── Auth pages — redirect to /role if already authenticated ─────────────────
 const AUTH_PAGES = [
   '/login',
+  '/patient/login',
   '/verify-otp',
   '/doctor/login',
   '/doctor/register',
   '/admin/login',
 ];
+
+const resolveUnauthenticatedLogin = (pathname: string): string => {
+  if (pathname.startsWith('/doctor/')) return '/doctor/login';
+  if (pathname.startsWith('/admin/')) return '/admin/login';
+  return '/patient/login';
+};
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -86,13 +93,14 @@ export function middleware(request: NextRequest) {
   // ── 1. Static assets, API routes, Next internals — always pass through ─────
   // (already excluded by the `matcher` below, but guard here for safety)
 
-  // ── 2. Protected route without session → redirect to /login ─────────────────
+  // ── 2. Protected route without session → role login redirect ─────────────────
   const isProtected = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix)
   );
 
   if (isProtected && !hasSession) {
-    const loginUrl = new URL('/login', request.url);
+    const loginTarget = resolveUnauthenticatedLogin(pathname);
+    const loginUrl = new URL(loginTarget, request.url);
     // Preserve the intended destination for post-login redirect (optional enhancement).
     loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);

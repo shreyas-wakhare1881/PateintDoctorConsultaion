@@ -12,7 +12,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/auth.store';
-import { ROUTES } from '@/config/routes';
+import { ROLE_LOGIN, UNAUTHENTICATED_REDIRECT } from '@/config/routes';
 
 const AUTO_REDIRECT_SECONDS = 8;
 
@@ -21,17 +21,20 @@ interface SessionExpiredModalProps {
   onClose: () => void;
 }
 
+
 export function SessionExpiredModal({ open, onClose }: SessionExpiredModalProps) {
-  const { clearSession } = useAuthStore();
+  const { clearSession, sessionExpiredRole } = useAuthStore();
   const router = useRouter();
   const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECONDS);
 
   const handleRedirect = useCallback(() => {
+    const redirectRole = sessionExpiredRole ?? 'Patient';
     clearSession();
     sessionStorage.removeItem('pdc_otp_phone');
     onClose();
-    router.replace(ROUTES.login);
-  }, [clearSession, onClose, router]);
+    const loginRoute = ROLE_LOGIN[redirectRole] ?? UNAUTHENTICATED_REDIRECT;
+    router.replace(loginRoute);
+  }, [clearSession, onClose, router, sessionExpiredRole]);
 
   // Countdown timer
   useEffect(() => {

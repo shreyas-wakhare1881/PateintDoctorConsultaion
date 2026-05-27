@@ -35,6 +35,10 @@ export const doctorApi = {
   updateAvailabilitySlot: (slotId: string, data: unknown) =>
     apiClient.patch(apiConfig.endpoints.doctors.availabilityById(slotId), data),
 
+  /** DELETE /api/doctors/availability/{slotId} — delete a slot */
+  deleteAvailabilitySlot: (slotId: string) =>
+    apiClient.delete(apiConfig.endpoints.doctors.availabilityById(slotId)),
+
   // ── Consultations ─────────────────────────────────────────────────────────
 
   /** GET /api/consultations/doctor/requests — incoming consultation requests */

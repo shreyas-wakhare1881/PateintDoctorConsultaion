@@ -32,6 +32,7 @@ import axios, {
 } from 'axios';
 import { apiConfig } from '@/config/api.config';
 import { useAuthStore } from '@/store/auth.store';
+import type { AuthUserDto } from '@/types/auth.types';
 
 // ── Public endpoints — [AllowAnonymous] on the backend ───────────────────────
 // 401 from any of these is a BUSINESS LOGIC failure (wrong OTP, bad password),
@@ -148,17 +149,20 @@ export const attachAuthInterceptor = (client: AxiosInstance): void => {
         // Use a bare axios instance to avoid interceptor loops.
         const response = await axios.post<{
           success: boolean;
-          data: { accessToken: string; refreshToken: string };
+          data: { accessToken: string; refreshToken: string; user?: AuthUserDto };
         }>(
           `${apiConfig.baseUrl}${apiConfig.endpoints.auth.refresh}`,
           { refreshToken },
           { headers: apiConfig.headers }
         );
 
-        const { accessToken: newAccess, refreshToken: newRefresh } =
+        const { accessToken: newAccess, refreshToken: newRefresh, user } =
           response.data.data;
 
         useAuthStore.getState().refreshSession(newAccess, newRefresh);
+        if (user) {
+          useAuthStore.getState().setUser(user);
+        }
         processQueue(null, newAccess);
 
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;

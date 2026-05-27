@@ -21,6 +21,7 @@ public interface IConsultationService
     // ── Shared ────────────────────────────────────────────────────────────────
     Task<ConsultationDetailsResponse> GetConsultationByIdAsync(Guid userId, string userRole, Guid consultationId, CancellationToken ct = default);
     Task<IReadOnlyList<ConsultationStatusHistoryResponse>> GetStatusHistoryAsync(Guid userId, string userRole, Guid consultationId, CancellationToken ct = default);
+    Task<ConsultationVideoTokenResponse> GenerateVideoTokenAsync(Guid userId, string userRole, Guid consultationId, CancellationToken ct = default);
 
     // ── Admin ─────────────────────────────────────────────────────────────────
     Task<PaginatedResponse<ConsultationSummaryResponse>> GetAllConsultationsAsync(AdminConsultationQuery query, CancellationToken ct = default);

@@ -3,12 +3,13 @@
 /**
  * AdminGuard — restricts route to role=Admin only.
  * Source of truth: frontend/SDD/auth.md — Redirect matrix
+ * Unauthenticated redirect: /admin/login
  */
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
-import { UNAUTHENTICATED_REDIRECT, ROLE_DASHBOARD } from '@/config/routes';
+import { ROUTES, ROLE_DASHBOARD } from '@/config/routes';
 import { SessionLoader } from '@/components/shared/session-loader';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
@@ -18,11 +19,11 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isSessionLoading) return;
     if (!isAuthenticated) {
-      router.replace(UNAUTHENTICATED_REDIRECT);
+      router.replace(ROUTES.admin.login);
       return;
     }
     if (user?.role !== 'Admin') {
-      router.replace(ROLE_DASHBOARD[user!.role] ?? UNAUTHENTICATED_REDIRECT);
+      router.replace(ROLE_DASHBOARD[user!.role] ?? ROUTES.login);
     }
   }, [isAuthenticated, isSessionLoading, user, router]);
 

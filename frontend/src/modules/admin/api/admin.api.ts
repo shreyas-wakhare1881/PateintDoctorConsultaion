@@ -23,21 +23,21 @@ export const adminApi = {
   getPendingDoctors: () =>
     apiClient.get(apiConfig.endpoints.admin.doctorsPending),
 
-  /** PUT /api/admin/doctors/{doctorId}/approve */
-  approveDoctor: (doctorId: string) =>
-    apiClient.put(apiConfig.endpoints.admin.doctorApprove(doctorId), {}),
+  /** PATCH /api/admin/doctors/{doctorId}/approve */
+  approveDoctor: (doctorId: string, reason?: string) =>
+    apiClient.patch(apiConfig.endpoints.admin.doctorApprove(doctorId), { reason: reason ?? null }),
 
-  /** PUT /api/admin/doctors/{doctorId}/reject */
+  /** PATCH /api/admin/doctors/{doctorId}/reject */
   rejectDoctor: (doctorId: string, reason: string) =>
-    apiClient.put(apiConfig.endpoints.admin.doctorReject(doctorId), { reason }),
+    apiClient.patch(apiConfig.endpoints.admin.doctorReject(doctorId), { reason }),
 
-  /** PUT /api/admin/doctors/{doctorId}/suspend */
+  /** PATCH /api/admin/doctors/{doctorId}/suspend */
   suspendDoctor: (doctorId: string, reason: string) =>
-    apiClient.put(apiConfig.endpoints.admin.doctorSuspend(doctorId), { reason }),
+    apiClient.patch(apiConfig.endpoints.admin.doctorSuspend(doctorId), { reason }),
 
-  /** PUT /api/admin/doctors/{doctorId}/reactivate */
-  reactivateDoctor: (doctorId: string) =>
-    apiClient.put(apiConfig.endpoints.admin.doctorReactivate(doctorId), {}),
+  /** PATCH /api/admin/doctors/{doctorId}/reactivate */
+  reactivateDoctor: (doctorId: string, reason?: string) =>
+    apiClient.patch(apiConfig.endpoints.admin.doctorReactivate(doctorId), { reason: reason ?? null }),
 
   // ── Patient Moderation ────────────────────────────────────────────────────
 
@@ -45,13 +45,13 @@ export const adminApi = {
   getPatients: (params?: Record<string, unknown>) =>
     apiClient.get(apiConfig.endpoints.admin.patients, { params }),
 
-  /** PUT /api/admin/patients/{userId}/block */
+  /** PATCH /api/admin/patients/{userId}/block */
   blockPatient: (userId: string, reason: string) =>
-    apiClient.put(apiConfig.endpoints.admin.patientBlock(userId), { reason }),
+    apiClient.patch(apiConfig.endpoints.admin.patientBlock(userId), { reason }),
 
-  /** PUT /api/admin/patients/{userId}/unblock */
+  /** PATCH /api/admin/patients/{userId}/unblock */
   unblockPatient: (userId: string) =>
-    apiClient.put(apiConfig.endpoints.admin.patientUnblock(userId), {}),
+    apiClient.patch(apiConfig.endpoints.admin.patientUnblock(userId), { reason: null }),
 
   // ── Consultation Oversight (read-only) ─────────────────────────────────────
 

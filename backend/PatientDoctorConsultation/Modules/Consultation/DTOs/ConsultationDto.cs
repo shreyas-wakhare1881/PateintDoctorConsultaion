@@ -141,3 +141,13 @@ public sealed record ConsultationStatusHistoryResponse(
     DateTime CreatedAt
 );
 
+/// <summary>Issued to an authorized consultation participant for joining LiveKit room.</summary>
+public sealed record ConsultationVideoTokenResponse(
+    Guid ConsultationId,
+    string MeetingRoomId,
+    string AccessToken,
+    string LiveKitUrl,
+    string ParticipantIdentity,
+    DateTime ExpiresAt
+);
+
