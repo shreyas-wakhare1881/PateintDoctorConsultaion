@@ -1,25 +1,38 @@
-import Link from 'next/link';
+'use client';
 
-export default function HomePage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-4xl font-bold tracking-tight">
-        Patient Doctor Consultation
-      </h1>
-      <p className="text-muted-foreground text-lg">
-        AI-powered healthcare consultation platform
-      </p>
-      <div className="flex gap-4">
-        <Link href="/patient-login" className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700">
-          Patient Login
-        </Link>
-        <Link href="/doctor-login" className="rounded-md bg-green-600 px-5 py-2 text-white hover:bg-green-700">
-          Doctor Login
-        </Link>
-        <Link href="/admin-login" className="rounded-md bg-gray-700 px-5 py-2 text-white hover:bg-gray-800">
-          Admin Login
-        </Link>
-      </div>
-    </main>
-  );
+/**
+ * Root page — Splash Screen
+ * Source of truth: frontend/SDD/auth.md — Splash Screen behavior
+ *
+ * This page acts as the splash screen entry point:
+ *  - AuthProvider has already attempted token refresh (isSessionLoading → false).
+ *  - If authenticated: redirect to role dashboard.
+ *  - If not authenticated: redirect to /auth/role.
+ *  - Displays SessionLoader while session check is in-flight.
+ */
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth.store';
+import { ROLE_DASHBOARD, UNAUTHENTICATED_REDIRECT } from '@/config/routes';
+import { SessionLoader } from '@/components/shared/session-loader';
+
+export default function SplashPage() {
+  const { isAuthenticated, isSessionLoading, user } = useAuthStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isSessionLoading) return;
+
+    if (isAuthenticated && user) {
+      const destination = ROLE_DASHBOARD[user.role] ?? UNAUTHENTICATED_REDIRECT;
+      router.replace(destination);
+    } else {
+      router.replace(UNAUTHENTICATED_REDIRECT);
+    }
+  }, [isAuthenticated, isSessionLoading, user, router]);
+
+  // Show brand splash while session check + redirect is pending.
+  return <SessionLoader />;
 }
+

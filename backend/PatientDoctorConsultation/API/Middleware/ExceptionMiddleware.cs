@@ -42,9 +42,9 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (UnauthorizedException ex)
         {
-            logger.LogWarning("Unauthorized: {Message}", ex.Message);
+            logger.LogWarning("Unauthorized: {Message} Code={Code}", ex.Message, ex.Code);
             await WriteAsync(context, HttpStatusCode.Unauthorized,
-                ApiResponse<object>.Fail(ex.Message));
+                ApiResponse<object>.Fail(ex.Message, code: ex.Code));
         }
         catch (Exception ex)
         {

@@ -17,6 +17,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 {
     /// <summary>Register a new Doctor account. Doctor accounts are inactive until approved by admin. Patients do not register — they authenticate via OTP.</summary>
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
@@ -36,6 +37,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     /// <summary>Login with email and password. Available for Doctor and Admin roles only.</summary>
     [HttpPost("login")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthTokenResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
@@ -52,8 +54,9 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(ApiResponse<AuthTokenResponse>.Ok(tokens, "Login successful."));
     }
 
-    /// <summary>Send 6-digit OTP to patient phone number (E.164 format). Auto-creates Patient account on first request. Patient-only flow.</summary>
+    /// <summary>Send 4-digit OTP to patient phone number (E.164 format). Auto-creates Patient account on first request. Patient-only flow.</summary>
     [HttpPost("send-otp")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<OtpResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SendOtp(
@@ -69,8 +72,9 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(ApiResponse<OtpResponse>.Ok(response, "OTP dispatched successfully."));
     }
 
-    /// <summary>Verify 6-digit OTP submitted by patient. Issues JWT + refresh token on success. Patient-only flow.</summary>
+    /// <summary>Verify 4-digit OTP submitted by patient. Issues JWT + refresh token on success. Patient-only flow.</summary>
     [HttpPost("verify-otp")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthTokenResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
@@ -89,6 +93,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     /// <summary>Rotate refresh token and issue a new JWT access token pair.</summary>
     [HttpPost("refresh")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthTokenResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]

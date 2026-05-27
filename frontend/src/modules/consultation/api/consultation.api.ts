@@ -1,10 +1,15 @@
-import { apiClient } from '@/services/api-client';
+import { apiClient, aiApiClient } from '@/services/api-client';
 import { apiConfig } from '@/config/api.config';
 
 export const consultationApi = {
-  book: (data: unknown) => apiClient.post(apiConfig.endpoints.consultation.book, data),
-  getRoom: (id: string) => apiClient.get(apiConfig.endpoints.consultation.room(id)),
-  getSummary: (id: string) => apiClient.get(apiConfig.endpoints.consultation.summary(id)),
+  book: (data: unknown) =>
+    apiClient.post(apiConfig.endpoints.consultations.book, data),
+
+  /** Returns full consultation detail including meetingRoomId for LiveKit. */
+  getRoom: (id: string) =>
+    apiClient.get(apiConfig.endpoints.consultations.byId(id)),
+
+  /** Generates AI consultation summary via the FastAPI AI service. */
   generateSummary: (id: string, data: unknown) =>
-    apiClient.post(apiConfig.endpoints.consultation.summary(id), data),
+    aiApiClient.post('/ai/summary/', { consultation_id: id, ...data as object }),
 };

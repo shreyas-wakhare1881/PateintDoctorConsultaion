@@ -23,6 +23,27 @@ public static class AuthenticationExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
+                // ── SignalR: extract JWT from query string ─────────────────────
+                // SignalR WebSocket / SSE transports cannot send Authorization headers.
+                // The SignalR client passes the token as ?access_token=... query param.
+                // Without this handler, NotificationHub/ConsultationHub always return 401.
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         return services;
     }

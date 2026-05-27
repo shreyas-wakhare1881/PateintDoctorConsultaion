@@ -123,12 +123,13 @@ public sealed class AuthService(
 
         var user = await db.Set<User>()
             .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct)
-            ?? throw new UnauthorizedException("Invalid credentials.");
+            ?? throw new UnauthorizedException("Invalid credentials.", "INVALID_CREDENTIALS");
 
         if (!user.IsActive)
         {
             throw new UnauthorizedException(
-                "Account is pending admin approval.");
+                "Account is pending admin approval.",
+                "ACCOUNT_INACTIVE");
         }
 
         // IMPORTANT:
@@ -137,7 +138,7 @@ public sealed class AuthService(
 
         if (user.Role != role)
         {
-            throw new UnauthorizedException("Invalid credentials.");
+            throw new UnauthorizedException("Invalid credentials.", "INVALID_CREDENTIALS");
         }
 
         var validPassword = passwordService.Verify(
@@ -147,7 +148,7 @@ public sealed class AuthService(
         if (!validPassword)
         {
             logger.LogWarning("Login failed: invalid password. UserId={UserId} Role={Role}", user.Id, role);
-            throw new UnauthorizedException("Invalid credentials.");
+            throw new UnauthorizedException("Invalid credentials.", "INVALID_CREDENTIALS");
         }
 
         logger.LogInformation("Login successful. UserId={UserId} Role={Role}", user.Id, role);
@@ -198,7 +199,8 @@ public sealed class AuthService(
         if (!user.IsActive)
         {
             throw new UnauthorizedException(
-                "Account is deactivated. Please contact support.");
+                "Account is deactivated. Please contact support.",
+                "ACCOUNT_INACTIVE");
         }
 
         user.OtpCode = otpService.Generate();
@@ -207,7 +209,9 @@ public sealed class AuthService(
 
         await db.SaveChangesAsync(ct);
 
-        logger.LogInformation("OTP dispatched. UserId={UserId}", user.Id);
+        logger.LogInformation(
+            "[OTP-SEND] Stored. Phone={Phone} UserId={UserId} ExpiresAt={ExpiresAt}",
+            normalizedPhone, user.Id, user.OtpExpiresAt!.Value.ToString("O"));
 
         return new OtpResponse(
             "OTP sent successfully. Valid for 5 minutes.",
@@ -226,24 +230,37 @@ public sealed class AuthService(
 
         var user = await db.Set<User>()
             .FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone, ct)
-            ?? throw new UnauthorizedException("Invalid credentials.");
+            ?? throw new UnauthorizedException("Invalid credentials.", "INVALID_CREDENTIALS");
 
         if (!user.IsActive)
         {
             throw new UnauthorizedException(
-                "Account is deactivated. Please contact support.");
+                "Account is deactivated. Please contact support.",
+                "ACCOUNT_INACTIVE");
         }
+
+        // Log the OTP verification attempt so developers can confirm the session lifecycle.
+        // Expected in normal flow:  PendingOtp=True
+        // NO_PENDING_OTP scenario:  PendingOtp=False — send-otp must be called first.
+        logger.LogInformation(
+            "[OTP-VERIFY] Attempt. Phone={Phone} UserId={UserId} PendingOtp={HasPending}",
+            normalizedPhone, user.Id, user.OtpCode is not null);
 
         if (user.OtpCode is null || user.OtpExpiresAt is null)
         {
+            logger.LogWarning(
+                "[OTP-VERIFY] NO_PENDING_OTP. Phone={Phone} UserId={UserId}. OTP was consumed or send-otp was never called.",
+                normalizedPhone, user.Id);
             throw new UnauthorizedException(
-                "No pending OTP found. Please request a new OTP.");
+                "No pending OTP found. Please request a new OTP.",
+                "NO_PENDING_OTP");
         }
 
         if (DateTime.UtcNow > user.OtpExpiresAt.Value)
         {
             throw new UnauthorizedException(
-                "OTP has expired. Please request a new one.");
+                "OTP has expired. Please request a new one.",
+                "OTP_EXPIRED");
         }
 
         var validOtp = otpService.IsValid(
@@ -254,7 +271,7 @@ public sealed class AuthService(
         if (!validOtp)
         {
             logger.LogWarning("OTP verification failed: invalid code. UserId={UserId}", user.Id);
-            throw new UnauthorizedException("Invalid OTP code.");
+            throw new UnauthorizedException("Invalid OTP code.", "INVALID_OTP");
         }
 
         user.OtpCode = null;
@@ -286,19 +303,22 @@ public sealed class AuthService(
                 u => u.RefreshToken == hashedToken,
                 ct)
             ?? throw new UnauthorizedException(
-                "Invalid or expired refresh token.");
+                "Invalid or expired refresh token.",
+                "INVALID_REFRESH_TOKEN");
 
         if (!user.IsActive)
         {
             throw new UnauthorizedException(
-                "Account is deactivated.");
+                "Account is deactivated.",
+                "ACCOUNT_INACTIVE");
         }
 
         if (user.RefreshTokenExpiresAt is null ||
             DateTime.UtcNow > user.RefreshTokenExpiresAt.Value)
         {
             throw new UnauthorizedException(
-                "Refresh token has expired. Please log in again.");
+                "Refresh token has expired. Please log in again.",
+                "REFRESH_TOKEN_EXPIRED");
         }
 
         return await IssueTokenPairAsync(user, ct);
