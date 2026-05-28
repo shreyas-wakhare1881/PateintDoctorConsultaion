@@ -7,6 +7,8 @@ import { Spinner } from '@/components/shared/spinner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ROUTES } from '@/config/routes';
 import { useConsultationById, useConsultationHistory } from '@/modules/consultation/hooks/useConsultation';
+import { usePrescriptionByConsultation } from '@/modules/prescription/hooks/usePrescription';
+import { PrescriptionViewer } from '@/components/consultation/PrescriptionViewer';
 
 function PatientConsultationDetailContent() {
   const params = useParams<{ id: string }>();
@@ -14,6 +16,10 @@ function PatientConsultationDetailContent() {
 
   const detailsQuery = useConsultationById(consultationId);
   const historyQuery = useConsultationHistory(consultationId);
+
+  const canViewPrescription =
+    detailsQuery.data?.status === 'Completed' || detailsQuery.data?.status === 'InProgress';
+  const prescriptionQuery = usePrescriptionByConsultation(consultationId, !!canViewPrescription);
 
   if (detailsQuery.isLoading) {
     return (
@@ -80,6 +86,11 @@ function PatientConsultationDetailContent() {
             Join Video Consultation
           </Link>
         </div>
+      )}
+
+      {/* ── Prescription ──────────────────────────────────────────────────── */}
+      {canViewPrescription && prescriptionQuery.data && (
+        <PrescriptionViewer prescription={prescriptionQuery.data} />
       )}
 
       <div className="rounded-xl border bg-card p-5 shadow-sm">

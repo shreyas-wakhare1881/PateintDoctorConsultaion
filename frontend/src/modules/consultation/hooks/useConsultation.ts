@@ -10,6 +10,7 @@ import type {
   ConsultationSummaryDto,
   ConsultationVideoTokenDto,
 } from '../types/consultation.types';
+import { PRESCRIPTION_QUERY_KEYS } from '@/modules/prescription/hooks/usePrescription';
 
 export const CONSULTATION_QUERY_KEYS = {
   myList: (params?: ConsultationListQuery) => ['consultations', 'my', params] as const,
@@ -70,7 +71,11 @@ export const useConsultationVideoToken = (id: string, enabled = true) =>
     queryKey: CONSULTATION_QUERY_KEYS.videoToken(id),
     queryFn: () => consultationApi.generateVideoToken(id).then((r) => r.data.data),
     enabled: !!id && enabled,
-    staleTime: 60_000,
+    staleTime: 90_000,           // treat token as fresh for 90s — avoid re-fetching mid-call
+    refetchOnWindowFocus: false, // do NOT refetch when user alt-tabs back — breaks active calls
+    refetchOnReconnect: false,   // do NOT refetch on reconnect — LiveKit handles reconnect itself
+    retry: 1,                    // one retry on transient errors; fail fast on auth errors (403/409)
+    gcTime: 0,                   // evict from cache immediately on unmount — tokens must not be stale
   });
 
 export const useCancelConsultation = () => {
@@ -121,7 +126,11 @@ export const useCompleteConsultation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, notes }: { id: string; notes?: string }) => consultationApi.complete(id, notes),
-    onSuccess: (_, vars) => invalidateDoctorConsultationQueries(qc, vars.id),
+    onSuccess: (_, vars) => {
+      invalidateDoctorConsultationQueries(qc, vars.id);
+      // Prescription may now be viewable — refresh it
+      qc.invalidateQueries({ queryKey: PRESCRIPTION_QUERY_KEYS.byConsultation(vars.id) });
+    },
   });
 };
 

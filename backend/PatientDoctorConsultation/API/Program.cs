@@ -8,6 +8,21 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Map legacy single-underscore env vars → ASP.NET config sections ──────────
+// Supports both: LIVEKIT_API_KEY (single _) and LiveKit__ApiKey (double __)
+// Priority order: double-underscore env var > single-underscore env var > appsettings
+var lkApiKey    = Environment.GetEnvironmentVariable("LIVEKIT_API_KEY");
+var lkApiSecret = Environment.GetEnvironmentVariable("LIVEKIT_API_SECRET");
+var lkUrl       = Environment.GetEnvironmentVariable("LIVEKIT_URL")
+               ?? Environment.GetEnvironmentVariable("LIVEKIT_HOST");
+
+if (!string.IsNullOrWhiteSpace(lkApiKey))
+    builder.Configuration["LiveKit:ApiKey"]    = lkApiKey;
+if (!string.IsNullOrWhiteSpace(lkApiSecret))
+    builder.Configuration["LiveKit:ApiSecret"] = lkApiSecret;
+if (!string.IsNullOrWhiteSpace(lkUrl))
+    builder.Configuration["LiveKit:Host"]      = lkUrl;
+
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddSwaggerDocumentation();

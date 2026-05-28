@@ -22,6 +22,7 @@ const PATIENT_BOTTOM: BottomNavItem[] = [
   { label: 'Home', href: ROUTES.patient.dashboard },
   { label: 'Search', href: ROUTES.patient.doctors },
   { label: 'Consultations', href: ROUTES.patient.consultations },
+  { label: 'Prescriptions', href: ROUTES.patient.prescriptions },
   { label: 'Profile', href: ROUTES.patient.profile },
 ];
 

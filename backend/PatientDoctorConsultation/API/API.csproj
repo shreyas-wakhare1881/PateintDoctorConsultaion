@@ -30,6 +30,7 @@
     <ProjectReference Include="../Modules/Doctor/Modules.Doctor.csproj" />
     <ProjectReference Include="../Modules/Consultation/Modules.Consultation.csproj" />
     <ProjectReference Include="../Modules/Admin/Modules.Admin.csproj" />
+    <ProjectReference Include="../Modules/Prescription/Modules.Prescription.csproj" />
   </ItemGroup>
 
 </Project>

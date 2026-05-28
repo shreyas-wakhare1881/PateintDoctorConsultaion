@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,6 +16,9 @@ import {
 } from '@/modules/consultation/hooks/useConsultation';
 import { useDoctorStatusGate } from '@/modules/doctor/hooks/useDoctor';
 import { parseApiError } from '@/utils/errors';
+import { usePrescriptionByConsultation } from '@/modules/prescription/hooks/usePrescription';
+import { CreatePrescriptionForm } from '@/components/consultation/CreatePrescriptionForm';
+import { PrescriptionViewer } from '@/components/consultation/PrescriptionViewer';
 
 function DoctorConsultationDetailContent() {
   const params = useParams<{ id: string }>();
@@ -25,6 +29,11 @@ function DoctorConsultationDetailContent() {
   const historyQuery = useConsultationHistory(consultationId);
   const startMutation = useStartConsultation();
   const completeMutation = useCompleteConsultation();
+
+  const c = detailsQuery.data;
+  const canWrite = c?.status === 'InProgress' || c?.status === 'Completed';
+  const prescriptionQuery = usePrescriptionByConsultation(consultationId, !!canWrite);
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
 
   if (gateLoading || !isApproved || detailsQuery.isLoading) {
     return (
@@ -38,17 +47,18 @@ function DoctorConsultationDetailContent() {
     return <EmptyState title="Consultation not found" message="Unable to load consultation details." />;
   }
 
-  const c = detailsQuery.data;
-  const canStart = c.status === 'Confirmed';
-  const canComplete = c.status === 'InProgress';
-  const canJoin = c.consultationType === 'Video' && (c.status === 'Confirmed' || c.status === 'InProgress') && !!c.meetingRoomId;
+  const consultation = detailsQuery.data;
+  const canStart = consultation.status === 'Confirmed';
+  const canComplete = consultation.status === 'InProgress';
+  const canJoin = consultation.consultationType === 'Video' && (consultation.status === 'Confirmed' || consultation.status === 'InProgress') && !!consultation.meetingRoomId;
+  const hasPrescription = !!prescriptionQuery.data;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Consultation Overview</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{c.consultationNumber}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{consultation.consultationNumber}</p>
         </div>
         <Link href={ROUTES.doctor.consultations} className="rounded-lg border px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
           Back to Consultations
@@ -56,23 +66,23 @@ function DoctorConsultationDetailContent() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card label="Patient" value={c.patientName} />
-        <Card label="Status" value={c.status} />
-        <Card label="Date" value={c.scheduledDate} />
-        <Card label="Time" value={`${c.startTime} - ${c.endTime}`} />
-        <Card label="Type" value={c.consultationType} />
-        <Card label="Fee Snapshot" value={`INR ${c.consultationFeeSnapshot}`} />
+        <Card label="Patient" value={consultation.patientName} />
+        <Card label="Status" value={consultation.status} />
+        <Card label="Date" value={consultation.scheduledDate} />
+        <Card label="Time" value={`${consultation.startTime} - ${consultation.endTime}`} />
+        <Card label="Type" value={consultation.consultationType} />
+        <Card label="Fee Snapshot" value={`INR ${consultation.consultationFeeSnapshot}`} />
       </div>
 
       <div className="rounded-xl border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Symptoms</h2>
-        <p className="mt-2 text-sm text-foreground/90">{c.symptoms}</p>
+        <p className="mt-2 text-sm text-foreground/90">{consultation.symptoms}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         {canJoin && (
           <Link
-            href={`${ROUTES.consultation.videoRoom(c.meetingRoomId!)}?consultationId=${c.id}`}
+            href={`${ROUTES.consultation.videoRoom(consultation.meetingRoomId!)}?consultationId=${consultation.id}`}
             className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             Join Call
@@ -83,7 +93,7 @@ function DoctorConsultationDetailContent() {
             type="button"
             onClick={async () => {
               try {
-                await startMutation.mutateAsync(c.id);
+                await startMutation.mutateAsync(consultation.id);
                 toast.success('Consultation started.');
               } catch (err) {
                 toast.error(parseApiError(err).message ?? 'Failed to start consultation.');
@@ -101,7 +111,7 @@ function DoctorConsultationDetailContent() {
             onClick={async () => {
               const notes = window.prompt('Add optional completion notes') ?? undefined;
               try {
-                await completeMutation.mutateAsync({ id: c.id, notes: notes?.trim() || undefined });
+                await completeMutation.mutateAsync({ id: consultation.id, notes: notes?.trim() || undefined });
                 toast.success('Consultation completed.');
               } catch (err) {
                 toast.error(parseApiError(err).message ?? 'Failed to complete consultation.');
@@ -115,11 +125,38 @@ function DoctorConsultationDetailContent() {
         )}
       </div>
 
-      {c.notes && (
+      {consultation.notes && (
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Clinical Notes</h2>
-          <p className="mt-2 text-sm text-foreground/90">{c.notes}</p>
+          <p className="mt-2 text-sm text-foreground/90">{consultation.notes}</p>
         </div>
+      )}
+
+      {/* ── Prescription Section ──────────────────────────────────────────── */}
+      {canWrite && (
+        <>
+          {prescriptionQuery.isLoading ? (
+            <div className="flex justify-center py-4"><Spinner /></div>
+          ) : hasPrescription ? (
+            <PrescriptionViewer prescription={prescriptionQuery.data!} />
+          ) : showPrescriptionForm ? (
+            <CreatePrescriptionForm
+              consultationId={consultationId}
+              onCreated={() => setShowPrescriptionForm(false)}
+            />
+          ) : (
+            <div className="rounded-xl border border-dashed bg-card p-5 text-center">
+              <p className="text-sm text-muted-foreground mb-3">No prescription written yet.</p>
+              <button
+                type="button"
+                onClick={() => setShowPrescriptionForm(true)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Write Prescription
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <div className="rounded-xl border bg-card p-5 shadow-sm">

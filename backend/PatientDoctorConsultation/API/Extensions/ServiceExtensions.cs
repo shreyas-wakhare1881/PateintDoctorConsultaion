@@ -28,6 +28,8 @@ using PatientDoctorConsultation.Modules.Patient.Interfaces;
 using PatientDoctorConsultation.Modules.Patient.Mappings;
 using PatientDoctorConsultation.Modules.Patient.Services;
 using PatientDoctorConsultation.Modules.Patient.Validators;
+using PatientDoctorConsultation.Modules.Prescription.Interfaces;
+using PatientDoctorConsultation.Modules.Prescription.Services;
 
 namespace PatientDoctorConsultation.API.Extensions;
 
@@ -61,6 +63,9 @@ public static class ServiceExtensions
 
         // ── Admin module ───────────────────────────────────────────────────────
         services.AddScoped<IAdminService, AdminService>();
+
+        // ── Prescription module ────────────────────────────────────────────────
+        services.AddScoped<IPrescriptionService, PrescriptionService>();
 
         // ── AutoMapper ─────────────────────────────────────────────────────────
         services.AddAutoMapper(cfg =>

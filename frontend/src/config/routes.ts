@@ -57,6 +57,8 @@ export const ROUTES = {
      */
     consultations: '/patient/consultation-history',
     consultationDetail: (id: string) => `/patient/consultations/${id}`,
+    /** Patient prescription history — GET /api/prescriptions/my */
+    prescriptions: '/patient/prescriptions',
   },
 
   // ── Doctor ─────────────────────────────────────────────────────────────────

@@ -37,7 +37,7 @@ export const consultationApi = {
     apiClient.get(apiConfig.endpoints.consultations.history(id)),
 
   generateVideoToken: (id: string) =>
-    apiClient.post(`/api/consultations/${id}/video-token`, {}),
+    apiClient.post(apiConfig.endpoints.consultations.videoToken(id), {}),
 
   /** Generates AI consultation summary via the FastAPI AI service. */
   generateSummary: (id: string, data: unknown) =>

@@ -74,6 +74,16 @@ export const apiConfig = {
       complete: (id: string) => `/api/consultations/${id}/complete`,
       /** GET /api/consultations/{id}/history */
       history: (id: string) => `/api/consultations/${id}/history`,
+      /** POST /api/consultations/{id}/video-token — issues LiveKit access token */
+      videoToken: (id: string) => `/api/consultations/${id}/video-token`,
+      /** POST /api/consultations/{id}/prescription — doctor creates prescription */
+      prescription: (id: string) => `/api/consultations/${id}/prescription`,
+    },
+
+    // ── Prescription Module — base: /api/prescriptions ───────────────────────
+    prescriptions: {
+      /** GET /api/prescriptions/my — patient gets all their prescriptions */
+      my: '/api/prescriptions/my',
     },
 
     // ── Admin Module — base: /api/admin ───────────────────────────────────────

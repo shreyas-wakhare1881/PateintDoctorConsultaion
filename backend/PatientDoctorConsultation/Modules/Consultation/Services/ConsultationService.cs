@@ -320,11 +320,12 @@ public sealed class ConsultationService(
         consultation.Status    = ConsultationStatus.Confirmed;
         consultation.UpdatedAt = DateTime.UtcNow;
 
-        // For Video type: generate meeting room details (stub — real integration is future scope)
+        // For Video type: generate deterministic room using consultation ID.
+        // Room name is stable across retries — doctor and patient always join the same room.
         if (consultation.ConsultationType == ConsultationType.Video)
         {
-            consultation.MeetingRoomId = Guid.NewGuid().ToString("N")[..12];
-            consultation.MeetingLink   = $"https://meet.example.com/rooms/{consultation.MeetingRoomId}";
+            consultation.MeetingRoomId = $"consultation-{consultation.Id:N}";
+            consultation.MeetingLink   = $"{_liveKitConfig.Host}/room/consultation-{consultation.Id:N}";
         }
 
         await RecordStatusTransitionAsync(consultation.Id, oldStatus, ConsultationStatus.Confirmed, userId, null, ct, skipSave: true);
@@ -534,21 +535,41 @@ public sealed class ConsultationService(
         if (consultation.Status is not (ConsultationStatus.Confirmed or ConsultationStatus.InProgress))
             throw new ConflictException("Video join is allowed only for Confirmed or InProgress consultations.");
 
-        if (string.IsNullOrWhiteSpace(consultation.MeetingRoomId))
-            throw new ConflictException("Meeting room is not provisioned for this consultation yet.");
+        // Always use deterministic room name: consultation-{id}
+        // This self-heals consultations that were confirmed with a legacy random MeetingRoomId.
+        var roomName = $"consultation-{consultation.Id:N}";
+
+        if (consultation.MeetingRoomId != roomName)
+        {
+            consultation.MeetingRoomId = roomName;
+            consultation.MeetingLink   = $"{_liveKitConfig.Host}/room/{roomName}";
+            consultation.UpdatedAt     = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+
+            logger.LogInformation(
+                "Self-healed MeetingRoomId for ConsultationId={ConsultationId} → {RoomName}",
+                consultation.Id, roomName);
+        }
 
         var user = await db.Set<User>().FirstOrDefaultAsync(u => u.Id == userId, ct)
             ?? throw new NotFoundException("User not found.");
 
+        // Identity format: doctor-{userId} / patient-{userId}
+        // userId here is the Auth User ID — unique per participant in this room.
         var participantIdentity = $"{userRole.ToLowerInvariant()}-{userId:N}";
+
         var accessToken = liveKitService.GenerateAccessToken(
-            consultation.MeetingRoomId,
+            roomName,
             participantIdentity,
             user.FullName);
 
+        logger.LogInformation(
+            "Video token issued. ConsultationId={ConsultationId} Room={Room} Identity={Identity} Role={Role}",
+            consultation.Id, roomName, participantIdentity, userRole);
+
         return new ConsultationVideoTokenResponse(
             ConsultationId: consultation.Id,
-            MeetingRoomId: consultation.MeetingRoomId,
+            MeetingRoomId: roomName,
             AccessToken: accessToken,
             LiveKitUrl: _liveKitConfig.Host,
             ParticipantIdentity: participantIdentity,

@@ -1,2 +1,4 @@
-// Consultation components — VideoCallView, ChatPanel, AISummaryCard, CallControls, etc.
-export {};
+export { ConsultationRoom } from './ConsultationRoom';
+export type { ConsultationRoomProps } from './ConsultationRoom';
+export { CreatePrescriptionForm } from './CreatePrescriptionForm';
+export { PrescriptionViewer } from './PrescriptionViewer';
