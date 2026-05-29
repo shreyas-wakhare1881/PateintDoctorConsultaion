@@ -1,24 +1,81 @@
 'use client';
 
+/**
+ * Admin Pending Doctors Page
+ * Route: /admin/doctors/pending
+ * Guard: AdminGuard
+ *
+ * Uses PendingDoctorCard which enforces:
+ *  - isProfileCompleted gate (Approve button disabled when false)
+ *  - Proper reject / approve dialogs
+ */
+
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { AdminGuard } from '@/guards/admin.guard';
 import { useAdminPendingDoctors, useApproveDoctor, useRejectDoctor } from '@/modules/admin/hooks/useAdmin';
-import { Spinner } from '@/components/shared/spinner';
+import {
+  PendingDoctorCard,
+  PendingDoctorCardSkeleton,
+} from '@/components/admin/doctor-cards';
+import {
+  ApproveDoctorDialog,
+  RejectDoctorDialog,
+} from '@/components/admin/moderation-dialogs';
 import type { AdminPendingDoctorItem } from '@/modules/admin/types/admin.types';
+import { parseApiError } from '@/utils/errors';
+
+type DialogType = 'approve' | 'reject' | null;
+
+interface ActiveDialog {
+  type: DialogType;
+  doctorId: string;
+  doctorName: string;
+}
 
 function PendingDoctorsContent() {
   const { data, isLoading } = useAdminPendingDoctors();
   const approveMutation = useApproveDoctor();
   const rejectMutation = useRejectDoctor();
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog | null>(null);
+
+  const openDialog = (type: DialogType, doctor: AdminPendingDoctorItem) =>
+    setActiveDialog({ type, doctorId: doctor.doctorId, doctorName: doctor.fullName });
+  const closeDialog = () => setActiveDialog(null);
+
+  const handleApprove = async (reason: string) => {
+    if (!activeDialog) return;
+    try {
+      await approveMutation.mutateAsync({ doctorId: activeDialog.doctorId, reason: reason || undefined });
+      toast.success(`${activeDialog.doctorName} approved successfully.`);
+      closeDialog();
+    } catch (err) {
+      toast.error(parseApiError(err).message ?? 'Approval failed.');
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!activeDialog) return;
+    try {
+      await rejectMutation.mutateAsync({ doctorId: activeDialog.doctorId, reason });
+      toast.success(`${activeDialog.doctorName}'s application rejected.`);
+      closeDialog();
+    } catch (err) {
+      toast.error(parseApiError(err).message ?? 'Rejection failed.');
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner size="lg" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <PendingDoctorCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
 
-  const doctors: AdminPendingDoctorItem[] = Array.isArray(data) ? data : data?.items ?? [];
+  const doctors: AdminPendingDoctorItem[] = data?.items ?? [];
 
   return (
     <div className="space-y-6">
@@ -27,41 +84,37 @@ function PendingDoctorsContent() {
       {doctors.length === 0 ? (
         <p className="text-muted-foreground">No pending doctor registrations.</p>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {doctors.map((d) => (
-            <div key={d.doctorId} className="rounded-xl border bg-card p-5 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">{d.fullName}</p>
-                  <p className="text-sm text-muted-foreground">{d.specialization ?? 'No specialization'}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {d.qualification} • {d.experienceYears ?? '?'} yrs • {d.city ?? 'N/A'}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    License: {d.licenseNumber ?? 'Not provided'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                    disabled={approveMutation.isPending}
-                    onClick={() => approveMutation.mutate({ doctorId: d.doctorId })}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                    disabled={rejectMutation.isPending}
-                    onClick={() => rejectMutation.mutate({ doctorId: d.doctorId, reason: 'Does not meet criteria' })}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            </div>
+            <PendingDoctorCard
+              key={d.doctorId}
+              doctor={d}
+              onApprove={() => openDialog('approve', d)}
+              onReject={() => openDialog('reject', d)}
+              isApproving={approveMutation.isPending && activeDialog?.doctorId === d.doctorId}
+              isRejecting={rejectMutation.isPending && activeDialog?.doctorId === d.doctorId}
+            />
           ))}
         </div>
       )}
+
+      {/* Approve dialog */}
+      <ApproveDoctorDialog
+        open={activeDialog?.type === 'approve'}
+        doctorName={activeDialog?.doctorName ?? ''}
+        onConfirm={handleApprove}
+        onClose={closeDialog}
+        isPending={approveMutation.isPending}
+      />
+
+      {/* Reject dialog */}
+      <RejectDoctorDialog
+        open={activeDialog?.type === 'reject'}
+        doctorName={activeDialog?.doctorName ?? ''}
+        onConfirm={handleReject}
+        onClose={closeDialog}
+        isPending={rejectMutation.isPending}
+      />
     </div>
   );
 }

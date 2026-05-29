@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { doctorApi } from '../api/doctor.api';
 import { ROUTES } from '@/config/routes';
+import { getNotificationHubConnection } from '@/services/signalr-client';
+import { socketConfig } from '@/config/socket.config';
 import type { PaginatedResponse } from '@/types/api.types';
 import type {
   DoctorApprovalStatus,
@@ -81,6 +83,8 @@ export const useDoctorStatusGate = () => {
 
 /**
  * useDoctorPendingPoller — polls doctor profile and enforces status-page ownership.
+ * Also subscribes to the SignalR `DoctorStatusUpdated` event for real-time redirect
+ * the instant an admin approves / rejects / suspends the doctor.
  *
  * expectedStatus route mapping:
  *  - Pending   -> /doctor/pending
@@ -91,8 +95,10 @@ export const useDoctorStatusGate = () => {
  */
 export const useDoctorPendingPoller = (expectedStatus: DoctorApprovalStatus = 'Pending') => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profile, isError, error } = useDoctorProfile({ refetchInterval: 60_000 });
 
+  // ── Polling-based redirect ────────────────────────────────────────────────
   useEffect(() => {
     // 404 = no Doctor row → redirect to setup
     if (isError) {
@@ -122,6 +128,23 @@ export const useDoctorPendingPoller = (expectedStatus: DoctorApprovalStatus = 'P
       router.replace(canonicalRoute);
     }
   }, [profile, isError, error, router, expectedStatus]);
+
+  // ── Real-time SignalR redirect ────────────────────────────────────────────
+  useEffect(() => {
+    const hub = getNotificationHubConnection();
+
+    const handleStatusUpdated = () => {
+      // Invalidate the cached profile so the polling useEffect above re-runs
+      // with the fresh ApprovalStatus and performs the correct redirect immediately.
+      queryClient.invalidateQueries({ queryKey: DOCTOR_QUERY_KEYS.profile });
+    };
+
+    hub.on(socketConfig.events.doctorStatusUpdated, handleStatusUpdated);
+
+    return () => {
+      hub.off(socketConfig.events.doctorStatusUpdated, handleStatusUpdated);
+    };
+  }, [queryClient]);
 
   return { profile };
 };

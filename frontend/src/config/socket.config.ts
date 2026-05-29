@@ -15,5 +15,6 @@ export const socketConfig = {
     webRtcOffer: 'WebRtcOffer',
     webRtcAnswer: 'WebRtcAnswer',
     webRtcIceCandidate: 'WebRtcIceCandidate',
+    doctorStatusUpdated: 'DoctorStatusUpdated',
   },
 } as const;

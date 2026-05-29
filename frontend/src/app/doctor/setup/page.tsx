@@ -15,11 +15,12 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { BrandMark } from '@/components/auth/brand-mark';
 import { DoctorGuard } from '@/guards/doctor.guard';
 import { doctorApi } from '@/modules/doctor/api/doctor.api';
-import { useDoctorProfile } from '@/modules/doctor/hooks/useDoctor';
+import { useDoctorProfile, DOCTOR_QUERY_KEYS } from '@/modules/doctor/hooks/useDoctor';
 import { ROUTES } from '@/config/routes';
 import { Spinner } from '@/components/shared/spinner';
 
@@ -80,6 +81,7 @@ const inputCls =
 
 function DoctorSetupPageContent() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profile, isLoading: isProfileLoading, isError, error } = useDoctorProfile();
   const [form, setForm] = useState<SetupForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -164,7 +166,11 @@ function DoctorSetupPageContent() {
 
     setSubmitting(true);
     try {
-      await doctorApi.createProfile(payload);
+      const response = await doctorApi.createProfile(payload);
+      // Write the fresh profile (isProfileCompleted: true) into the React Query
+      // cache BEFORE the redirect so useDoctorPendingPoller on /doctor/pending
+      // reads the updated data instead of stale data that would redirect back to setup.
+      queryClient.setQueryData(DOCTOR_QUERY_KEYS.profile, response.data.data);
       toast.success('Profile submitted! Your application is now under admin review.');
       router.replace(ROUTES.doctor.pending);
     } catch (err: unknown) {

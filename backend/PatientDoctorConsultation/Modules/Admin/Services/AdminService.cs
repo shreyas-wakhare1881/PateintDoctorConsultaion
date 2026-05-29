@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
+using PatientDoctorConsultation.Infrastructure.Realtime.SignalR;
 using PatientDoctorConsultation.Modules.Admin.DTOs;
 using PatientDoctorConsultation.Modules.Admin.Enums;
 using PatientDoctorConsultation.Modules.Admin.Interfaces;
@@ -18,7 +19,8 @@ namespace PatientDoctorConsultation.Modules.Admin.Services;
 
 public sealed class AdminService(
     ApplicationDbContext db,
-    ILogger<AdminService> logger) : IAdminService
+    ILogger<AdminService> logger,
+    ISignalRNotificationService notificationService) : IAdminService
 {
     // ════════════════════════════════════════════════════════════════════════
     // DASHBOARD
@@ -156,6 +158,13 @@ public sealed class AdminService(
         await CreateAuditLogAsync(adminId, AdminActionType.DoctorApproved, AdminTargetEntityType.Doctor, doctorId, request.Reason, ct);
         await db.SaveChangesAsync(ct);
 
+        // Notify the doctor in real-time so the pending page can redirect immediately.
+        await notificationService.SendToUserAsync(
+            doctor.UserId.ToString(),
+            "DoctorStatusUpdated",
+            new { ApprovalStatus = doctor.ApprovalStatus.ToString() },
+            ct);
+
         logger.LogInformation(
             "[AdminService] Doctor approved. DoctorId={DoctorId} PreviousStatus={Previous} AdminId={AdminId}",
             doctorId, previous, adminId);
@@ -180,6 +189,13 @@ public sealed class AdminService(
 
         await CreateAuditLogAsync(adminId, AdminActionType.DoctorRejected, AdminTargetEntityType.Doctor, doctorId, request.Reason, ct);
         await db.SaveChangesAsync(ct);
+
+        // Notify the doctor in real-time.
+        await notificationService.SendToUserAsync(
+            doctor.UserId.ToString(),
+            "DoctorStatusUpdated",
+            new { ApprovalStatus = doctor.ApprovalStatus.ToString() },
+            ct);
 
         logger.LogInformation(
             "[AdminService] Doctor rejected. DoctorId={DoctorId} AdminId={AdminId} Reason={Reason}",
@@ -206,6 +222,13 @@ public sealed class AdminService(
         await CreateAuditLogAsync(adminId, AdminActionType.DoctorSuspended, AdminTargetEntityType.Doctor, doctorId, request.Reason, ct);
         await db.SaveChangesAsync(ct);
 
+        // Notify the doctor in real-time.
+        await notificationService.SendToUserAsync(
+            doctor.UserId.ToString(),
+            "DoctorStatusUpdated",
+            new { ApprovalStatus = doctor.ApprovalStatus.ToString() },
+            ct);
+
         logger.LogInformation(
             "[AdminService] Doctor suspended. DoctorId={DoctorId} AdminId={AdminId} Reason={Reason}",
             doctorId, adminId, request.Reason);
@@ -230,6 +253,13 @@ public sealed class AdminService(
 
         await CreateAuditLogAsync(adminId, AdminActionType.DoctorReactivated, AdminTargetEntityType.Doctor, doctorId, request.Reason, ct);
         await db.SaveChangesAsync(ct);
+
+        // Notify the doctor in real-time.
+        await notificationService.SendToUserAsync(
+            doctor.UserId.ToString(),
+            "DoctorStatusUpdated",
+            new { ApprovalStatus = doctor.ApprovalStatus.ToString() },
+            ct);
 
         logger.LogInformation(
             "[AdminService] Doctor reactivated. DoctorId={DoctorId} AdminId={AdminId}",
