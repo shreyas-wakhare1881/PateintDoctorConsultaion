@@ -23,6 +23,14 @@ using PatientDoctorConsultation.Modules.Doctor.Interfaces;
 using PatientDoctorConsultation.Modules.Doctor.Mappings;
 using PatientDoctorConsultation.Modules.Doctor.Services;
 using PatientDoctorConsultation.Modules.Doctor.Validators;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.Interfaces;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.NLP;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.NLP.Fuzzy;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.NLP.Ranking;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.NLP.Semantic;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.Repositories;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.Services;
+using PatientDoctorConsultation.Modules.DoctorDiscovery.Validators;
 using PatientDoctorConsultation.Modules.Shared.Interfaces;
 using PatientDoctorConsultation.Modules.Patient.Interfaces;
 using PatientDoctorConsultation.Modules.Patient.Mappings;
@@ -54,6 +62,26 @@ public static class ServiceExtensions
         // ── Doctor module ──────────────────────────────────────────────────────
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<IDoctorStubCreator, DoctorStubCreator>();
+
+        // ── Doctor Discovery module ────────────────────────────────────────────
+        services.AddScoped<IDoctorDiscoveryRepository, DoctorDiscoveryRepository>();
+        services.AddScoped<IDoctorDiscoveryService, DoctorDiscoveryService>();
+        services.AddScoped<ISearchAnalyticsRepository, SearchAnalyticsRepository>();
+
+        // ── NLP Search Foundation ──────────────────────────────────────────────
+        // Singletons: stateless services backed by static MedicalDictionary data.
+        services.AddSingleton<IQueryNormalizer, QueryNormalizer>();
+        services.AddSingleton<IMedicalSynonymService, MedicalSynonymService>();
+        services.AddSingleton<IIntentParser, IntentParser>();
+
+        // Sprint 3+4: Fuzzy, Ranking, Semantic — all Singleton (no DB access).
+        services.AddSingleton<IFuzzySearchService, FuzzySearchService>();
+        services.AddSingleton<ISearchRankingService, SearchRankingService>();
+        services.AddSingleton<ISemanticSearchProvider, DictionarySemanticSearchProvider>();
+
+        // Scoped: services that depend on scoped repositories.
+        services.AddScoped<INlpSearchService, NlpSearchService>();
+        services.AddScoped<ISuggestionService, SuggestionService>();
 
         // ── Patient module ─────────────────────────────────────────────────────────
         services.AddScoped<IPatientService, PatientService>();
@@ -91,6 +119,9 @@ public static class ServiceExtensions
 
         // ── FluentValidation — Admin module ────────────────────────────────────
         services.AddValidatorsFromAssemblyContaining<DoctorRejectRequestValidator>();
+
+        // ── FluentValidation — Doctor Discovery module ─────────────────────────
+        services.AddValidatorsFromAssemblyContaining<DoctorSearchRequestValidator>();
 
         return services;
     }

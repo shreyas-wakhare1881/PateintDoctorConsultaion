@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>PatientDoctorConsultation.Modules.DoctorDiscovery</AssemblyName>
+    <RootNamespace>PatientDoctorConsultation.Modules.DoctorDiscovery</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Shared/Shared.csproj" />
+    <ProjectReference Include="../../Infrastructure/Infrastructure.csproj" />
+    <ProjectReference Include="../Shared/Modules.Shared.csproj" />
+    <!-- Discovery queries the Doctor entity directly for high-performance projections -->
+    <ProjectReference Include="../Doctor/Modules.Doctor.csproj" />
+    <!-- Needs User for FullName join -->
+    <ProjectReference Include="../Auth/Modules.Auth.csproj" />
+  </ItemGroup>
+
+</Project>

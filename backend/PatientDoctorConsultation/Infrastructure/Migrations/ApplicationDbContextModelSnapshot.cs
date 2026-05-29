@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 using PatientDoctorConsultation.Infrastructure.Persistence.Context;
 
 #nullable disable
@@ -309,6 +310,10 @@ namespace PatientDoctorConsultation.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("CityNormalized")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("ClinicAddress")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
@@ -361,7 +366,15 @@ namespace PatientDoctorConsultation.Infrastructure.Migrations
                         .HasPrecision(3, 2)
                         .HasColumnType("numeric(3,2)");
 
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .HasColumnType("tsvector")
+                        .HasColumnName("SearchVector");
+
                     b.Property<string>("Specialization")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SpecializationNormalized")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
@@ -389,6 +402,15 @@ namespace PatientDoctorConsultation.Infrastructure.Migrations
                     b.HasIndex("ApprovalStatus")
                         .HasDatabaseName("IX_Doctors_ApprovalStatus");
 
+                    b.HasIndex("CityNormalized")
+                        .HasDatabaseName("IX_Doctors_CityNormalized");
+
+                    b.HasIndex("ConsultationFee")
+                        .HasDatabaseName("IX_Doctors_ConsultationFee");
+
+                    b.HasIndex("ExperienceYears")
+                        .HasDatabaseName("IX_Doctors_ExperienceYears");
+
                     b.HasIndex("IsPubliclyVisible")
                         .HasDatabaseName("IX_Doctors_IsPubliclyVisible");
 
@@ -397,12 +419,26 @@ namespace PatientDoctorConsultation.Infrastructure.Migrations
                         .HasDatabaseName("UQ_Doctors_LicenseNumber")
                         .HasFilter("\"LicenseNumber\" IS NOT NULL");
 
+                    b.HasIndex("SearchVector")
+                        .HasDatabaseName("IX_Doctors_SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
+
+                    b.HasIndex("SpecializationNormalized")
+                        .HasDatabaseName("IX_Doctors_SpecializationNormalized");
+
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("UQ_Doctors_UserId");
 
                     b.HasIndex("City", "Specialization")
                         .HasDatabaseName("IX_Doctors_City_Specialization");
+
+                    b.HasIndex("IsPubliclyVisible", "ApprovalStatus")
+                        .HasDatabaseName("IX_Doctors_Discovery_Eligibility");
+
+                    b.HasIndex("IsPubliclyVisible", "ApprovalStatus", "SpecializationNormalized", "CityNormalized")
+                        .HasDatabaseName("IX_Doctors_Discovery_Composite");
 
                     b.ToTable("Doctors", (string)null);
                 });
@@ -443,6 +479,69 @@ namespace PatientDoctorConsultation.Infrastructure.Migrations
                         .HasDatabaseName("IX_DoctorAvailabilities_DayOfWeek");
 
                     b.ToTable("DoctorAvailabilities", (string)null);
+                });
+
+            modelBuilder.Entity("PatientDoctorConsultation.Modules.DoctorDiscovery.Analytics.SearchQuery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("ConfidenceScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DidYouMeanQuery")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("FuzzyMatchApplied")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("NormalizedQuery")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ParsedIntentJson")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("ResultCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SearchSource")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("nlp");
+
+                    b.Property<Guid?>("TopResultId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_SearchQueries_CreatedAt");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("IX_SearchQueries_PatientId");
+
+                    b.HasIndex("SearchSource")
+                        .HasDatabaseName("IX_SearchQueries_SearchSource");
+
+                    b.ToTable("SearchQueries", (string)null);
                 });
 
             modelBuilder.Entity("PatientDoctorConsultation.Modules.Patient.Models.Patient", b =>

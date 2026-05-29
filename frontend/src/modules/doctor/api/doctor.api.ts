@@ -74,4 +74,22 @@ export const doctorApi = {
   /** GET /api/doctors/{id} — public single doctor profile */
   getPublicById: (doctorId: string) =>
     apiClient.get(apiConfig.endpoints.doctors.publicById(doctorId)),
+
+  // ── Discovery ──────────────────────────────────────────────────────────────
+
+  /** GET /api/discovery/doctors — rich filter/sort/paginate doctor discovery */
+  searchDoctors: (params?: Record<string, unknown>) =>
+    apiClient.get(apiConfig.endpoints.discovery.search, { params }),
+
+  /** GET /api/discovery/filters — dynamic filter options (specializations, cities, languages) */
+  getDiscoveryFilters: () =>
+    apiClient.get(apiConfig.endpoints.discovery.filters),
+
+  /** GET /api/discovery/nlp-search — NLP natural language doctor search */
+  nlpSearch: (params: Record<string, unknown>) =>
+    apiClient.get(apiConfig.endpoints.discovery.nlpSearch, { params }),
+
+  /** GET /api/discovery/suggestions?q=... — auto-complete suggestions */
+  getSuggestions: (q: string) =>
+    apiClient.get(apiConfig.endpoints.discovery.suggestions, { params: { q } }),
 };

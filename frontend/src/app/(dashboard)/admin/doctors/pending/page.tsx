@@ -8,6 +8,7 @@
  * Uses PendingDoctorCard which enforces:
  *  - isProfileCompleted gate (Approve button disabled when false)
  *  - Proper reject / approve dialogs
+ * Supports full server-side pagination so all pending doctors are accessible.
  */
 
 import { useState } from 'react';
@@ -24,6 +25,7 @@ import {
 } from '@/components/admin/moderation-dialogs';
 import type { AdminPendingDoctorItem } from '@/modules/admin/types/admin.types';
 import { parseApiError } from '@/utils/errors';
+import { PAGINATION } from '@/config/constants';
 
 type DialogType = 'approve' | 'reject' | null;
 
@@ -34,7 +36,10 @@ interface ActiveDialog {
 }
 
 function PendingDoctorsContent() {
-  const { data, isLoading } = useAdminPendingDoctors();
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const pageSize = PAGINATION.ADMIN_DEFAULT_PAGE_SIZE;
+
+  const { data, isLoading } = useAdminPendingDoctors(page, pageSize);
   const approveMutation = useApproveDoctor();
   const rejectMutation = useRejectDoctor();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog | null>(null);
@@ -76,12 +81,23 @@ function PendingDoctorsContent() {
   }
 
   const doctors: AdminPendingDoctorItem[] = data?.items ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const hasNextPage = data?.hasNextPage ?? false;
+  const hasPreviousPage = data?.hasPreviousPage ?? false;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Pending Doctor Approvals</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Pending Doctor Approvals</h1>
+        {totalCount > 0 && (
+          <span className="text-sm text-muted-foreground">
+            {totalCount} pending {totalCount === 1 ? 'doctor' : 'doctors'}
+          </span>
+        )}
+      </div>
 
-      {doctors.length === 0 ? (
+      {doctors.length === 0 && !isLoading ? (
         <p className="text-muted-foreground">No pending doctor registrations.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -95,6 +111,29 @@ function PendingDoctorsContent() {
               isRejecting={rejectMutation.isPending && activeDialog?.doctorId === d.doctorId}
             />
           ))}
+        </div>
+      )}
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!hasPreviousPage}
+            className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={!hasNextPage}
+            className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       )}
 

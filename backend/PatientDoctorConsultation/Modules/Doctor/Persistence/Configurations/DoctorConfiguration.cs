@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NpgsqlTypes;
 using DoctorEntity = PatientDoctorConsultation.Modules.Doctor.Models.Doctor;
 
 namespace PatientDoctorConsultation.Modules.Doctor.Persistence.Configurations;
@@ -69,7 +70,12 @@ public class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
 
         builder.Property(d => d.Country)
             .HasMaxLength(100);
+        // ── Normalized / Search-Optimized Columns ─────────────────────────────
+        builder.Property(d => d.SpecializationNormalized)
+            .HasMaxLength(256);
 
+        builder.Property(d => d.CityNormalized)
+            .HasMaxLength(100);
         // ── Approval & Visibility ─────────────────────────────────────────────
         builder.Property(d => d.ApprovalStatus)
             .HasConversion<int>()
@@ -106,6 +112,42 @@ public class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
 
         builder.HasIndex(d => d.IsPubliclyVisible)
             .HasDatabaseName("IX_Doctors_IsPubliclyVisible");
+
+        // Primary discovery eligibility: composite index for the exact WHERE clause
+        // used by every public-facing doctor query (IsPubliclyVisible=true AND ApprovalStatus=Approved).
+        builder.HasIndex(d => new { d.IsPubliclyVisible, d.ApprovalStatus })
+            .HasDatabaseName("IX_Doctors_Discovery_Eligibility");
+
+        // Normalized column indexes — enable index-range scans for case-insensitive filtering.
+        builder.HasIndex(d => d.SpecializationNormalized)
+            .HasDatabaseName("IX_Doctors_SpecializationNormalized");
+
+        builder.HasIndex(d => d.CityNormalized)
+            .HasDatabaseName("IX_Doctors_CityNormalized");
+
+        // Composite normalized discovery index: covers specialization + city + eligibility.
+        builder.HasIndex(d => new { d.IsPubliclyVisible, d.ApprovalStatus, d.SpecializationNormalized, d.CityNormalized })
+            .HasDatabaseName("IX_Doctors_Discovery_Composite");
+
+        // Experience range queries for discovery filters.
+        builder.HasIndex(d => d.ExperienceYears)
+            .HasDatabaseName("IX_Doctors_ExperienceYears");
+
+        // Fee range queries for discovery filters.
+        builder.HasIndex(d => d.ConsultationFee)
+            .HasDatabaseName("IX_Doctors_ConsultationFee");
+
+        // ── Full-Text Search Vector ───────────────────────────────────────────
+        // SearchVector is maintained by a DB trigger (see migration AddSprint3SearchIntelligence).
+        // EF is told the column is stored (computed) so it never tries to write it.
+        builder.Property(d => d.SearchVector)
+            .HasColumnName("SearchVector")
+            .HasColumnType("tsvector");
+
+        // GIN index for fast FTS queries.
+        builder.HasIndex(d => d.SearchVector)
+            .HasDatabaseName("IX_Doctors_SearchVector")
+            .HasMethod("GIN");
 
         // ── Soft Delete Global Query Filter ───────────────────────────────────
         // All queries automatically exclude soft-deleted doctors.

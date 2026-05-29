@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../api/admin.api';
+import { PAGINATION } from '@/config/constants';
 
 export const ADMIN_QUERY_KEYS = {
   dashboard: ['admin', 'dashboard'] as const,
   doctors: (params?: unknown) => ['admin', 'doctors', params] as const,
-  pendingDoctors: ['admin', 'doctors', 'pending'] as const,
+  pendingDoctors: (page?: number, pageSize?: number) => ['admin', 'doctors', 'pending', page, pageSize] as const,
   patients: (params?: unknown) => ['admin', 'patients', params] as const,
   consultations: (params?: unknown) => ['admin', 'consultations', params] as const,
   consultationById: (id: string) => ['admin', 'consultation', id] as const,
@@ -23,10 +24,13 @@ export const useAdminDoctors = (params?: Record<string, unknown>) =>
     queryFn: () => adminApi.getDoctors(params).then((r) => r.data.data),
   });
 
-export const useAdminPendingDoctors = () =>
+export const useAdminPendingDoctors = (
+  page: number = PAGINATION.DEFAULT_PAGE,
+  pageSize: number = PAGINATION.ADMIN_DEFAULT_PAGE_SIZE,
+) =>
   useQuery({
-    queryKey: ADMIN_QUERY_KEYS.pendingDoctors,
-    queryFn: () => adminApi.getPendingDoctors().then((r) => r.data.data),
+    queryKey: ADMIN_QUERY_KEYS.pendingDoctors(page, pageSize),
+    queryFn: () => adminApi.getPendingDoctors({ page, pageSize }).then((r) => r.data.data),
     // Refresh every 30 seconds to pick up newly registered doctors
     refetchInterval: 30_000,
   });

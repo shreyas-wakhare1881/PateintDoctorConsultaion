@@ -1,3 +1,4 @@
+using NpgsqlTypes;
 using PatientDoctorConsultation.Shared.Common;
 using PatientDoctorConsultation.Shared.Enums;
 
@@ -33,6 +34,20 @@ public class Doctor : BaseAuditableEntity
     public string? State { get; set; }
     public string? Country { get; set; }
 
+    // ── Normalized / Search-Optimized Columns ────────────────────────────────
+    /// <summary>
+    /// Lowercase, trimmed copy of Specialization. Maintained by DoctorService.
+    /// Enables index-accelerated case-insensitive specialization filtering
+    /// without per-query LOWER() function calls that prevent index use.
+    /// </summary>
+    public string? SpecializationNormalized { get; set; }
+
+    /// <summary>
+    /// Lowercase, trimmed copy of City. Maintained by DoctorService.
+    /// Enables index-accelerated case-insensitive city filtering.
+    /// </summary>
+    public string? CityNormalized { get; set; }
+
     // ── Approval & Visibility ─────────────────────────────────────────────────
     public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Pending;
     public bool IsProfileCompleted { get; set; } = false;
@@ -42,6 +57,11 @@ public class Doctor : BaseAuditableEntity
     public decimal? Rating { get; set; }
     public int TotalReviews { get; set; } = 0;
     public int TotalConsultations { get; set; } = 0;
+
+    // ── Full-Text Search Vector ────────────────────────────────────────────────
+    // Maintained by DB trigger (see migration AddSprint3SearchIntelligence).
+    // Covers: Specialization (A), HospitalName (B), Qualification (B), City (C), Bio (D).
+    public NpgsqlTsVector? SearchVector { get; set; }
 
     // ── Soft Delete ───────────────────────────────────────────────────────────
     public DateTime? DeletedAt { get; set; }

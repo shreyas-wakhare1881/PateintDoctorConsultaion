@@ -52,6 +52,16 @@ export const apiConfig = {
       publicById: (doctorId: string) => `/api/doctors/${doctorId}`,
     },
 
+    // ── Doctor Discovery Module — base: /api/discovery ───────────────────────
+    discovery: {
+      /** GET /api/discovery/doctors — rich filter/sort/paginate public doctor search */
+      search: '/api/discovery/doctors',
+      /** GET /api/discovery/filters — dynamic filter option values for UI dropdowns */
+      filters: '/api/discovery/filters',      /** GET /api/discovery/nlp-search?query=... — NLP-powered natural language search */
+      nlpSearch: '/api/discovery/nlp-search',
+      /** GET /api/discovery/suggestions?q=... — auto-complete suggestions */
+      suggestions: '/api/discovery/suggestions',    },
+
     // ── Consultation Module — base: /api/consultations ────────────────────────
     consultations: {
       /** POST /api/consultations — patient books a consultation */

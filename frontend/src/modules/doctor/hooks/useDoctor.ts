@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { doctorApi } from '../api/doctor.api';
 import { ROUTES } from '@/config/routes';
 import { getNotificationHubConnection } from '@/services/signalr-client';
@@ -8,9 +8,15 @@ import { socketConfig } from '@/config/socket.config';
 import type { PaginatedResponse } from '@/types/api.types';
 import type {
   DoctorApprovalStatus,
+  DiscoveryFilterOptions,
+  DoctorDiscoveryRequest,
+  DoctorDiscoveryResult,
   DoctorProfileDto,
   DoctorPublicDetail,
   DoctorPublicListItem,
+  NlpSearchRequest,
+  NlpSearchResponse,
+  SearchSuggestion,
 } from '../types/doctor.types';
 
 export const DOCTOR_QUERY_KEYS = {
@@ -18,6 +24,10 @@ export const DOCTOR_QUERY_KEYS = {
   availability: ['doctor', 'availability'] as const,
   consultationRequests: ['doctor', 'consultations', 'requests'] as const,
   publicList: (params?: unknown) => ['doctors', 'public', params] as const,
+  discoverySearch: (params?: unknown) => ['doctors', 'discovery', 'search', params] as const,
+  discoveryFilters: ['doctors', 'discovery', 'filters'] as const,
+  nlpSearch: (params?: unknown) => ['doctors', 'discovery', 'nlp', params] as const,
+  suggestions: (q: string) => ['doctors', 'discovery', 'suggestions', q] as const,
   publicById: (id: string) => ['doctors', 'public', id] as const,
 };
 
@@ -227,4 +237,63 @@ export const usePublicDoctorById = (doctorId: string) =>
     queryKey: DOCTOR_QUERY_KEYS.publicById(doctorId),
     queryFn: () => doctorApi.getPublicById(doctorId).then((r) => r.data.data),
     enabled: !!doctorId,
+  });
+
+/**
+ * GET /api/discovery/doctors — rich doctor discovery search.
+ * Supports SearchTerm, Specialization, City, State, Language,
+ * MinExperience, MaxExperience, MinConsultationFee, MaxConsultationFee,
+ * SortBy, SortDirection, Page, PageSize.
+ * Uses keepPreviousData for smooth pagination transitions.
+ */
+export const useDoctorDiscoverySearch = (
+  params?: DoctorDiscoveryRequest,
+  options?: { enabled?: boolean },
+) =>
+  useQuery<PaginatedResponse<DoctorDiscoveryResult>>({
+    queryKey: DOCTOR_QUERY_KEYS.discoverySearch(params),
+    queryFn: () =>
+      doctorApi.searchDoctors(params as Record<string, unknown> | undefined).then((r) => r.data.data),
+    placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
+  });
+
+/**
+ * GET /api/discovery/filters — dynamic filter option values.
+ * Returns distinct specializations, cities, and languages from actual approved doctor data.
+ * Stale time 5 min — these values don't change frequently.
+ */
+export const useDiscoveryFilterOptions = () =>
+  useQuery<DiscoveryFilterOptions>({
+    queryKey: DOCTOR_QUERY_KEYS.discoveryFilters,
+    queryFn: () => doctorApi.getDiscoveryFilters().then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+/**
+ * GET /api/discovery/nlp-search — NLP-powered natural language doctor search.
+ * Converts patient queries like "heart doctor in pune under 1000" into structured searches.
+ * Enabled only when request is non-null and has a non-empty query.
+ */
+export const useNlpSearch = (request: NlpSearchRequest | null) =>
+  useQuery<NlpSearchResponse>({
+    queryKey: DOCTOR_QUERY_KEYS.nlpSearch(request),
+    queryFn: () =>
+      doctorApi
+        .nlpSearch(request as unknown as Record<string, unknown>)
+        .then((r) => r.data.data),
+    placeholderData: keepPreviousData,
+    enabled: request !== null && request.query.trim().length > 0,
+  });
+
+/**
+ * GET /api/discovery/suggestions?q=... — auto-complete suggestions for the search box.
+ * Enabled only when q has 2+ characters. Stale time 30s — suggestions are stable.
+ */
+export const useSearchSuggestions = (q: string) =>
+  useQuery<SearchSuggestion[]>({
+    queryKey: DOCTOR_QUERY_KEYS.suggestions(q),
+    queryFn: () => doctorApi.getSuggestions(q).then((r) => r.data.data),
+    staleTime: 30 * 1000, // 30 seconds
+    enabled: q.trim().length >= 2,
   });

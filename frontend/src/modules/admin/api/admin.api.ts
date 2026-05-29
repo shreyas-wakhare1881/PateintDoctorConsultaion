@@ -20,8 +20,8 @@ export const adminApi = {
     apiClient.get(apiConfig.endpoints.admin.doctors, { params }),
 
   /** GET /api/admin/doctors/pending — doctors awaiting approval */
-  getPendingDoctors: () =>
-    apiClient.get(apiConfig.endpoints.admin.doctorsPending),
+  getPendingDoctors: (params?: { page?: number; pageSize?: number }) =>
+    apiClient.get(apiConfig.endpoints.admin.doctorsPending, { params }),
 
   /** PATCH /api/admin/doctors/{doctorId}/approve */
   approveDoctor: (doctorId: string, reason?: string) =>

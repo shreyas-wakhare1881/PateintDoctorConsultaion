@@ -66,6 +66,9 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
             doctor.State               = request.State?.Trim();
             doctor.Country             = request.Country?.Trim();
             doctor.LanguagesSpoken     = NormalizeLanguages(request.LanguagesSpoken);
+            // Keep normalized columns in sync
+            doctor.SpecializationNormalized = NormalizeSearchText(request.Specialization);
+            doctor.CityNormalized           = NormalizeSearchText(request.City);
             doctor.UpdatedAt           = DateTime.UtcNow;
 
             logger.LogInformation("Doctor profile stub updated during setup. UserId={UserId}", userId);
@@ -89,6 +92,8 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
                 State               = request.State?.Trim(),
                 Country             = request.Country?.Trim(),
                 LanguagesSpoken     = NormalizeLanguages(request.LanguagesSpoken),
+                SpecializationNormalized = NormalizeSearchText(request.Specialization),
+                CityNormalized           = NormalizeSearchText(request.City),
                 ApprovalStatus      = ApprovalStatus.Pending,
                 IsProfileCompleted  = false,
                 IsPubliclyVisible   = false,
@@ -157,10 +162,11 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
         if (request.ConsultationFee.HasValue)    doctor.ConsultationFee  = request.ConsultationFee.Value;
         if (request.HospitalName    is not null) doctor.HospitalName    = request.HospitalName.Trim();
         if (request.ClinicAddress   is not null) doctor.ClinicAddress   = request.ClinicAddress.Trim();
-        if (request.City            is not null) doctor.City            = request.City.Trim();
+        if (request.City            is not null) { doctor.City = request.City.Trim(); doctor.CityNormalized = NormalizeSearchText(request.City); }
         if (request.State           is not null) doctor.State           = request.State.Trim();
         if (request.Country         is not null) doctor.Country         = request.Country.Trim();
         if (request.LanguagesSpoken is not null) doctor.LanguagesSpoken  = NormalizeLanguages(request.LanguagesSpoken);
+        if (request.Specialization  is not null) { doctor.Specialization = request.Specialization.Trim(); doctor.SpecializationNormalized = NormalizeSearchText(request.Specialization); }
 
         // Re-evaluate profile completeness and public visibility
         doctor.IsProfileCompleted = EvaluateProfileCompleted(doctor);
@@ -542,5 +548,12 @@ public sealed class DoctorService(ApplicationDbContext db, ILogger<DoctorService
         input?.Where(l => !string.IsNullOrWhiteSpace(l))
               .Select(l => l.Trim())
               .ToList();
+
+    /// <summary>
+    /// Returns lowercase, trimmed version for storing in _Normalized columns.
+    /// Used for index-accelerated case-insensitive filtering in discovery queries.
+    /// </summary>
+    private static string? NormalizeSearchText(string? input) =>
+        string.IsNullOrWhiteSpace(input) ? null : input.Trim().ToLowerInvariant();
 }
 

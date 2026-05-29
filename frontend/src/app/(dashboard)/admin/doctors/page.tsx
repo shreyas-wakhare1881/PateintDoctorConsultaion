@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * Admin Doctors Management Page
@@ -40,6 +40,8 @@ import { DoctorStatusBadge } from '@/components/admin/doctor-status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
 import { parseApiError } from '@/utils/errors';
 
+import { PAGINATION } from '@/config/constants';
+
 // ─── Dialog State ──────────────────────────────────────────────────────────────
 
 type DialogType = 'approve' | 'reject' | 'suspend' | 'reactivate' | null;
@@ -53,13 +55,19 @@ interface ActiveDialog {
 // ─── Pending Tab ──────────────────────────────────────────────────────────────
 
 function PendingTab() {
-  const { data, isLoading, isError } = useAdminPendingDoctors();
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const pageSize = PAGINATION.ADMIN_DEFAULT_PAGE_SIZE;
+
+  const { data, isLoading, isError } = useAdminPendingDoctors(page, pageSize);
   const approveMutation = useApproveDoctor();
   const rejectMutation = useRejectDoctor();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog | null>(null);
 
   const displayedDoctors: AdminPendingDoctorItem[] = data?.items ?? [];
   const totalCount: number = data?.totalCount ?? 0;
+  const totalPages: number = data?.totalPages ?? 1;
+  const hasNextPage: boolean = data?.hasNextPage ?? false;
+  const hasPreviousPage: boolean = data?.hasPreviousPage ?? false;
 
   const openDialog = (type: DialogType, doctor: AdminPendingDoctorItem) =>
     setActiveDialog({
@@ -139,6 +147,29 @@ function PendingTab() {
         ))}
       </div>
 
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!hasPreviousPage}
+            className="rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={!hasNextPage}
+            className="rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {/* Dialogs */}
       <ApproveDoctorDialog
         open={activeDialog?.type === 'approve'}
@@ -161,7 +192,10 @@ function PendingTab() {
 // ─── All Doctors Tab (Approved / Rejected / Suspended) ────────────────────────
 
 function DoctorListTab({ status }: { status: Exclude<DoctorApprovalStatus, 'Pending'> }) {
-  const params = { approvalStatus: status, pageSize: 50 };
+  const [page, setPage] = useState<number>(PAGINATION.DEFAULT_PAGE);
+  const pageSize = PAGINATION.ADMIN_DEFAULT_PAGE_SIZE;
+
+  const params = { approvalStatus: status, page, pageSize };
   const { data, isLoading, isError } = useAdminDoctors(params as Record<string, unknown>);
   const approveMutation = useApproveDoctor();
   const rejectMutation = useRejectDoctor();
@@ -171,6 +205,9 @@ function DoctorListTab({ status }: { status: Exclude<DoctorApprovalStatus, 'Pend
 
   const doctors: AdminDoctorListItem[] = data?.items ?? [];
   const totalCount: number = data?.totalCount ?? 0;
+  const totalPages: number = data?.totalPages ?? 1;
+  const hasNextPage: boolean = data?.hasNextPage ?? false;
+  const hasPreviousPage: boolean = data?.hasPreviousPage ?? false;
 
   const openDialog = (type: DialogType, doctor: AdminDoctorListItem) =>
     setActiveDialog({ type, doctorId: doctor.doctorId, doctorName: doctor.fullName });
@@ -256,6 +293,29 @@ function DoctorListTab({ status }: { status: Exclude<DoctorApprovalStatus, 'Pend
           </tbody>
         </table>
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!hasPreviousPage}
+            className="rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={!hasNextPage}
+            className="rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Dialogs */}
       <SuspendDoctorDialog
