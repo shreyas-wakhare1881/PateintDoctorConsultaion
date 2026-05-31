@@ -71,7 +71,7 @@ function DoctorConsultationDetailContent() {
         <Card label="Date" value={consultation.scheduledDate} />
         <Card label="Time" value={`${consultation.startTime} - ${consultation.endTime}`} />
         <Card label="Type" value={consultation.consultationType} />
-        <Card label="Fee Snapshot" value={`INR ${consultation.consultationFeeSnapshot}`} />
+        <Card label="Fee Snapshot" value={`₹${consultation.consultationFeeSnapshot}`} />
       </div>
 
       <div className="rounded-xl border bg-card p-5 shadow-sm">
@@ -100,7 +100,8 @@ function DoctorConsultationDetailContent() {
               }
             }}
             disabled={startMutation.isPending}
-            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+            style={{ background: '#304F6D' }}
           >
             Start Consultation
           </button>

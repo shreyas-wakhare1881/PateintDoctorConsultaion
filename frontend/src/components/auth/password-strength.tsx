@@ -21,8 +21,8 @@ function getStrength(pwd: string): { score: number; label: string; color: string
 
   if (score <= 2) return { score, label: 'Weak', color: 'bg-destructive' };
   if (score === 3) return { score, label: 'Fair', color: 'bg-yellow-500' };
-  if (score === 4) return { score, label: 'Good', color: 'bg-emerald-400' };
-  return { score, label: 'Strong', color: 'bg-emerald-600' };
+  if (score === 4) return { score, label: 'Good', color: 'bg-[#899481]' };
+  return { score, label: 'Strong', color: 'bg-[#304F6D]' };
 }
 
 export function PasswordStrength({ password }: PasswordStrengthProps) {
@@ -45,8 +45,10 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
       <p className={cn('text-xs font-medium',
         score <= 2 ? 'text-destructive' :
         score === 3 ? 'text-yellow-600' :
-        'text-emerald-600'
-      )}>
+        score === 4 ? '' : ''
+      )}
+      style={score >= 4 ? { color: score === 4 ? '#899481' : '#304F6D' } : {}}
+      >
         {label}
       </p>
     </div>

@@ -21,10 +21,10 @@ export function BrandMark({ size = 'md', href = '/', className }: BrandMarkProps
 
   const mark = (
     <div className={cn('flex items-center gap-2.5', className)}>
-      {/* Teal cross icon */}
+      {/* Brand cross icon — Energy Navy gradient */}
       <div
-        className="relative flex-shrink-0 rounded-xl bg-primary"
-        style={{ width: s, height: s }}
+        className="relative flex-shrink-0 rounded-xl"
+        style={{ width: s, height: s, background: 'linear-gradient(135deg, #304F6D 0%, #899481 100%)' }}
       >
         {/* Vertical bar */}
         <div
@@ -41,14 +41,14 @@ export function BrandMark({ size = 'md', href = '/', className }: BrandMarkProps
       {/* Wordmark */}
       <div>
         <div
-          className="font-bold leading-none tracking-tight text-foreground"
-          style={{ fontSize: s * 0.5 }}
+          className="font-bold leading-none tracking-tight"
+          style={{ fontSize: s * 0.5, color: '#FFFFFF', letterSpacing: '-0.02em' }}
         >
           HealthConsult
         </div>
         <div
-          className="leading-none text-muted-foreground"
-          style={{ fontSize: s * 0.3 }}
+          className="leading-none font-medium"
+          style={{ fontSize: s * 0.3, color: 'rgba(255,255,255,0.65)' }}
         >
           Your trusted care partner
         </div>

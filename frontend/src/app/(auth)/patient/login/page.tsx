@@ -26,6 +26,9 @@ import { SessionLoader } from '@/components/shared/session-loader';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { useAuthAnalytics } from '@/hooks/useAuthAnalytics';
 
+import { AuthCard } from '@/components/auth/auth-card';
+import { AuthButton } from '@/components/auth/auth-button';
+
 // Country codes list — India first, most common markets
 const COUNTRY_CODES = [
   { code: '+91',  flag: '🇮🇳', name: 'India',       digits: 10 },
@@ -100,238 +103,256 @@ export default function PatientLoginPage() {
   const hasError = !!bannerError || !!errors.phoneNumber;
 
   return (
-    <AuthLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="w-full"
-      >
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-[0_2px_24px_rgba(0,0,0,0.08)] border border-border/50 p-7 sm:p-8">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="w-full"
+    >
+      {/* Card */}
+      <AuthCard>
 
-          {/* Header */}
-          <div className="mb-6 text-center">
-            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 mb-4">
-              <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
-                <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" fill="hsl(174 62% 37%)" opacity=".12"/>
-                <path d="M16 8v8m0 0l4-4m-4 4l-4-4" stroke="hsl(174 62% 37%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 20h8" stroke="hsl(174 62% 37%)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M6 16h3l2-4 3 8 2-6 2 3 1-1h7" stroke="hsl(174 62% 37%)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <h1 className="text-[1.55rem] font-bold tracking-tight text-slate-900 leading-tight">
-              Welcome to HealthConsult
-            </h1>
-            <p className="mt-1.5 text-sm text-slate-500">
-              Enter your mobile number to receive a secure OTP
-            </p>
+        {/* Header */}
+        <div className="mb-6 text-center">
+          <div
+            className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
+            style={{ background: 'rgba(48,79,109,0.12)' }}
+          >
+            <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
+              <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12 12-5.373 12-12S22.627 4 16 4z" fill="#304F6D" opacity=".15"/>
+              <path d="M6 16h3l2-4 3 8 2-6 2 3 1-1h7" stroke="#304F6D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} noValidate aria-label="Patient login form">
-            <div className="space-y-4">
-              {/* Phone Field */}
-              <div>
-                <label
-                  htmlFor={phoneFieldId}
-                  className="block text-sm font-semibold text-slate-800 mb-1.5"
-                >
-                  Mobile Number
-                  <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
-                </label>
-
-                <div
-                  className={`flex items-stretch h-12 rounded-xl border-2 bg-white overflow-hidden transition-colors
-                    ${hasError
-                      ? 'border-destructive ring-2 ring-destructive/15'
-                      : 'border-slate-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15'
-                    }`}
-                >
-                  <div className="relative shrink-0 flex items-center border-r border-slate-200">
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      aria-label="Country dial code"
-                      className="h-full appearance-none bg-slate-50 pl-3 pr-7 text-sm font-medium text-slate-700
-                        outline-none cursor-pointer hover:bg-slate-100 focus:bg-slate-100 transition-colors"
-                    >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.flag}  {c.name} ({c.code})
-                        </option>
-                      ))}
-                    </select>
-                    <svg
-                      className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400"
-                      viewBox="0 0 16 16" fill="none" aria-hidden="true"
-                    >
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-
-                  <div className="flex items-center px-2.5 text-sm font-semibold text-slate-600 bg-white border-r border-slate-100 select-none shrink-0">
-                    {selectedCountry.code}
-                  </div>
-
-                  <input
-                    id={phoneFieldId}
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="tel-national"
-                    placeholder={`${'0'.repeat(selectedCountry.digits - 1)}1`}
-                    disabled={loading}
-                    aria-invalid={hasError}
-                    aria-describedby={hasError ? `${phoneFieldId}-error` : undefined}
-                    {...register('phoneNumber')}
-                    className="flex-1 min-w-0 bg-transparent px-3 text-sm text-slate-900 placeholder:text-slate-400
-                      outline-none disabled:opacity-50"
-                  />
-                </div>
-
-                <AnimatePresence mode="wait">
-                  {errors.phoneNumber && (
-                    <motion.p
-                      id={`${phoneFieldId}-error`}
-                      role="alert"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="mt-1.5 text-xs text-destructive flex items-center gap-1"
-                    >
-                      <svg className="h-3 w-3 shrink-0" viewBox="0 0 12 12" fill="currentColor">
-                        <circle cx="6" cy="6" r="6" opacity=".2"/>
-                        <path d="M6 3.5v3M6 8h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                      </svg>
-                      {errors.phoneNumber.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Banner error */}
-              <AnimatePresence mode="wait">
-                {bannerError && (
-                  <motion.div
-                    role="alert"
-                    aria-live="assertive"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="flex items-start gap-2.5 rounded-xl bg-destructive/8 border border-destructive/20 px-3.5 py-2.5 text-sm text-destructive">
-                      <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                        <path d="M8 5v3.5M8 10.5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                      {bannerError}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                aria-busy={loading}
-                className="mt-1 w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold
-                  flex items-center justify-center gap-2
-                  hover:bg-primary/90 active:scale-[0.98] transition-all duration-150
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-                  disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none"
-              >
-                {loading ? (
-                  <>
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                    </svg>
-                    Sending OTP…
-                  </>
-                ) : (
-                  <>
-                    Get OTP
-                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Divider */}
-          <div className="my-5 flex items-center gap-3" aria-hidden="true">
-            <div className="flex-1 h-px bg-border/60" />
-            <span className="text-xs text-muted-foreground font-medium">Secure login</span>
-            <div className="flex-1 h-px bg-border/60" />
-          </div>
-
-          {/* Trust row */}
-          <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
-            <span className="flex items-center gap-1">
-              <svg className="h-3 w-3 text-primary" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1l1.18 2.39 2.64.38-1.91 1.86.45 2.62L6 7l-2.36 1.25.45-2.62L2.18 3.77l2.64-.38L6 1z" fill="currentColor"/>
-              </svg>
-              256-bit SSL
-            </span>
-            <span className="flex items-center gap-1">
-              <svg className="h-3 w-3 text-primary" viewBox="0 0 12 12" fill="none">
-                <rect x="2" y="5" width="8" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                <path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-              HIPAA-aligned
-            </span>
-            <span className="flex items-center gap-1">
-              <svg className="h-3 w-3 text-primary" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1.5l3.5 2v3c0 2-1.5 3.5-3.5 4C4 10 2.5 8.5 2.5 6.5v-3L6 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-              </svg>
-              Privacy-safe
-            </span>
-          </div>
+          <h1
+            className="text-[1.55rem] font-bold tracking-tight leading-tight"
+            style={{ color: '#1F2937', letterSpacing: '-0.03em', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+          >
+            Welcome to HealthConsult
+          </h1>
+          <p className="mt-1.5 text-sm" style={{ color: '#6B7280' }}>
+            Enter your mobile number to receive a secure OTP
+          </p>
         </div>
 
-        {/* Doctor CTA card */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.3 }}
-          className="mt-4 rounded-xl border border-border/60 bg-white/70 backdrop-blur-sm p-4 flex items-center justify-between gap-4"
-        >
-          <div>
-            <p className="text-sm font-semibold text-slate-800">Are you a doctor?</p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Join our network of trusted specialists.
-            </p>
-          </div>
-          <Link
-            href={ROUTES.doctor.landing}
-            className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-primary
-              hover:text-primary/80 transition-colors
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
-          >
-            Join
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h10M9 4l4 4-4 4"/>
-            </svg>
-          </Link>
-        </motion.div>
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-label="Patient login form">
+          <div className="space-y-4">
+            {/* Phone Field */}
+            <div>
+              <label
+                htmlFor={phoneFieldId}
+                className="block text-sm font-semibold mb-2"
+                style={{ color: '#1F2937', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+              >
+                Mobile Number
+                <span style={{ color: '#ef4444', marginLeft: 2 }} aria-hidden="true">*</span>
+              </label>
 
-        {/* Legal footer */}
-        <p className="mt-5 text-center text-xs text-slate-500 leading-relaxed">
-          By continuing, you agree to our{' '}
-          <Link href="/terms" className="underline underline-offset-2 text-slate-600 hover:text-slate-800 transition-colors">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline underline-offset-2 text-slate-600 hover:text-slate-800 transition-colors">
-            Privacy Policy
-          </Link>
-        </p>
+              {/* ── Phone input container ────────────────────────────── */}
+              <div
+                className={`flex items-stretch rounded-xl border overflow-hidden transition-all duration-200 ${
+                  hasError
+                    ? 'border-red-400 ring-2 ring-red-400/15'
+                    : 'border-slate-200 focus-within:border-[#304F6D] focus-within:ring-2 focus-within:ring-[#304F6D]/15'
+                }`}
+                style={{ background: '#FFFFFF', height: 48 }}
+              >
+                {/* Country selector */}
+                <div
+                  className="relative flex-shrink-0 flex items-center"
+                  style={{ borderRight: '1px solid rgba(48,79,109,0.12)' }}
+                >
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    aria-label="Country dial code"
+                    disabled={loading}
+                    className="h-full appearance-none outline-none cursor-pointer pl-3 pr-8 text-sm font-medium"
+                    style={{
+                      background: 'rgba(241,245,249,0.95)',
+                      color: '#1F2937',
+                      minWidth: 100,
+                      border: 'none',
+                    }}
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code} style={{ background: '#fff', color: '#1F2937' }}>
+                        {c.flag}  {c.name} ({c.code})
+                      </option>
+                    ))}
+                  </select>
+                  <svg
+                    className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5"
+                    viewBox="0 0 16 16" fill="none" aria-hidden="true"
+                  >
+                    <path d="M4 6l4 4 4-4" stroke="#6B7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+
+                {/* Selected code badge */}
+                <div
+                  className="flex items-center px-3 text-sm font-bold select-none shrink-0"
+                  style={{
+                    background: 'rgba(226,243,253,0.80)',
+                    color: '#304F6D',
+                    borderRight: '1px solid rgba(48,79,109,0.10)',
+                  }}
+                >
+                  {selectedCountry.code}
+                </div>
+
+                {/* Phone number input */}
+                <input
+                  id={phoneFieldId}
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="tel-national"
+                  placeholder={`${'0'.repeat(selectedCountry.digits - 1)}1`}
+                  disabled={loading}
+                  aria-invalid={hasError}
+                  aria-describedby={hasError ? `${phoneFieldId}-error` : undefined}
+                  {...register('phoneNumber')}
+                  className="flex-1 min-w-0 px-3 text-sm outline-none disabled:opacity-50"
+                  style={{
+                    background: 'transparent',
+                    color: '#1F2937',
+                    border: 'none',
+                  }}
+                />
+              </div>
+
+              <AnimatePresence mode="wait">
+                {errors.phoneNumber && (
+                  <motion.p
+                    id={`${phoneFieldId}-error`}
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-1.5 text-xs text-destructive flex items-center gap-1"
+                  >
+                    <svg className="h-3 w-3 shrink-0" viewBox="0 0 12 12" fill="currentColor">
+                      <circle cx="6" cy="6" r="6" opacity=".2"/>
+                      <path d="M6 3.5v3M6 8h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    {errors.phoneNumber.message}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Banner error */}
+            <AnimatePresence mode="wait">
+              {bannerError && (
+                <motion.div
+                  role="alert"
+                  aria-live="assertive"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-start gap-2.5 rounded-xl bg-destructive/8 border border-destructive/20 px-3.5 py-2.5 text-sm text-destructive">
+                    <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5v3.5M8 10.5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    {bannerError}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Submit */}
+            <AuthButton
+              type="submit"
+              loading={loading}
+              disabled={loading}
+            >
+              Get OTP
+              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </AuthButton>
+          </div>
+        </form>
+
+        {/* Divider */}
+        <div className="my-5 flex items-center gap-3" aria-hidden="true">
+          <div className="flex-1 h-px bg-border/60" />
+          <span className="text-xs text-muted-foreground font-medium">Secure login</span>
+          <div className="flex-1 h-px bg-border/60" />
+        </div>
+
+        {/* Trust row */}
+        <div className="flex items-center justify-center gap-4 text-xs" style={{ color: '#6B7280' }}>
+          <span className="flex items-center gap-1">
+            <svg className="h-3 w-3" style={{ color: '#304F6D' }} viewBox="0 0 12 12" fill="none">
+              <path d="M6 1l1.18 2.39 2.64.38-1.91 1.86.45 2.62L6 7l-2.36 1.25.45-2.62L2.18 3.77l2.64-.38L6 1z" fill="currentColor"/>
+            </svg>
+            256-bit SSL
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="h-3 w-3" style={{ color: '#304F6D' }} viewBox="0 0 12 12" fill="none">
+              <rect x="2" y="5" width="8" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M4 5V3.5a2 2 0 014 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            HIPAA-aligned
+          </span>
+          <span className="flex items-center gap-1">
+            <svg className="h-3 w-3" style={{ color: '#304F6D' }} viewBox="0 0 12 12" fill="none">
+              <path d="M6 1.5l3.5 2v3c0 2-1.5 3.5-3.5 4C4 10 2.5 8.5 2.5 6.5v-3L6 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+            </svg>
+            Privacy-safe
+          </span>
+        </div>
+      </AuthCard>
+
+      {/* Doctor CTA card */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.3 }}
+        className="mt-4 rounded-xl p-4 flex items-center justify-between gap-4"
+        style={{
+          background: 'rgba(255,255,255,0.70)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.45)',
+          boxShadow: '0 4px 16px rgba(48,79,109,0.08)',
+        }}
+      >
+        <div>
+          <p className="text-sm font-semibold" style={{ color: '#000000' }}>Are you a doctor?</p>
+          <p className="text-xs mt-0.5" style={{ color: '#000000' }}>
+            Join our network of trusted specialists.
+          </p>
+        </div>
+        <Link
+          href={ROUTES.doctor.landing}
+          className="shrink-0 inline-flex items-center gap-1 text-sm font-semibold transition-colors
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded"
+          style={{ color: '#E07D54' }}
+        >
+          Join
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h10M9 4l4 4-4 4"/>
+          </svg>
+        </Link>
       </motion.div>
-    </AuthLayout>
+
+      {/* Legal footer */}
+      <p className="mt-5 text-center text-xs leading-relaxed" style={{ color: 'rgba(0, 0, 0, 0.62)' }}>
+        By continuing, you agree to our{' '}
+        <Link href="/terms" className="underline underline-offset-2 transition-colors hover:text-black" style={{ color: 'rgba(0, 0, 0, 0.82)' }}>
+          Terms of Service
+        </Link>{' '}
+        and{' '}
+        <Link href="/privacy" className="underline underline-offset-2 transition-colors hover:text-black" style={{ color: 'rgba(0, 0, 0, 0.82)' }}>
+          Privacy Policy
+        </Link>
+      </p>
+    </motion.div>
   );
 }

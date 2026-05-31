@@ -88,15 +88,15 @@ export function OtpInput({
           onPaste={handlePaste}
           aria-label={`Digit ${idx + 1} of ${length}`}
           className={cn(
-            'h-14 w-14 rounded-xl border-2 bg-white text-center text-xl font-bold text-slate-900',
-            'transition-all duration-150 outline-none select-none',
+            'h-14 w-14 rounded-xl border bg-white text-center text-xl font-bold text-slate-900',
+            'transition-all duration-200 outline-none select-none',
             'focus:scale-105 focus:shadow-sm',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error
-              ? 'border-destructive text-destructive focus:border-destructive focus:ring-2 focus:ring-destructive/20'
+              ? 'border-destructive text-destructive focus:border-destructive focus:ring-2 focus:ring-destructive/15'
               : digit
-              ? 'border-primary bg-primary/5 text-primary focus:border-primary focus:ring-2 focus:ring-primary/20'
-              : 'border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/15'
+              ? 'border-ring bg-sky-50/30 text-ring focus:border-ring focus:ring-2 focus:ring-ring/15'
+              : 'border-slate-200 focus:border-ring focus:ring-2 focus:ring-ring/15'
           )}
         />
       ))}

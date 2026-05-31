@@ -26,19 +26,21 @@ export function AuthButton({
     <button
       {...props}
       disabled={disabled || loading}
+      style={variant === 'primary' ? {
+        background: 'linear-gradient(135deg, #E07D54 0%, #d06843 100%)',
+        boxShadow: '0 4px 16px rgba(224,125,84,0.35)',
+      } : undefined}
       className={cn(
         'relative flex h-12 w-full items-center justify-center gap-2 rounded-xl',
-        'text-sm font-semibold transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        'disabled:cursor-not-allowed disabled:opacity-60',
+        'text-sm font-semibold transition-all duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none',
         variant === 'primary' && [
-          'bg-primary text-primary-foreground',
-          'hover:bg-primary/90 active:scale-[0.98]',
-          'shadow-[0_2px_8px_-2px_hsl(174_62%_37%_/_0.35)]',
+          'text-white active:scale-[0.98]',
         ],
         variant === 'outline' && [
           'border-2 border-primary bg-transparent text-primary',
-          'hover:bg-primary/6 active:scale-[0.98]',
+          'hover:bg-neutral-50 active:scale-[0.98]',
         ],
         variant === 'ghost' && [
           'bg-transparent text-foreground hover:bg-muted',

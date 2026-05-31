@@ -25,6 +25,9 @@ import { AuthIllustration } from '@/components/auth/auth-illustration';
 import { AuthLayout } from '@/components/layout/auth-layout';
 import { useAuthAnalytics } from '@/hooks/useAuthAnalytics';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { AuthCard } from '@/components/auth/auth-card';
+import { AuthButton } from '@/components/auth/auth-button';
+import { AuthInput } from '@/components/auth/auth-input';
 
 type FormState = 'form' | 'success';
 
@@ -103,26 +106,26 @@ export default function DoctorRegisterPage() {
             exit={{ opacity: 0, scale: 0.97 }}
             className="w-full"
           >
-            <div className="bg-white rounded-2xl shadow-[0_2px_24px_rgba(0,0,0,0.08)] border border-border/50 p-7 sm:p-8 text-center">
+            <AuthCard className="text-center">
               <div className="flex justify-center mb-5">
                 <AuthIllustration type="pending" className="w-28 h-28" />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full mb-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <div className="inline-flex items-center gap-1.5 rounded-full mb-4 px-3 py-1 text-xs font-semibold" style={{ background: 'rgba(48,79,109,0.10)', color: '#304F6D' }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#304F6D' }} />
                 Account Created
               </div>
 
-              <h1 className="text-xl font-bold text-foreground">Almost There!</h1>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              <h1 className="text-xl font-bold" style={{ color: '#1F2937' }}>Almost There!</h1>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: '#6B7280' }}>
                 Your account has been created. <strong>One more step:</strong> log in and complete
                 your professional profile — your specialization, license number, qualifications,
                 and experience — so our admin team can review your application.
               </p>
 
-              <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-left">
-                <p className="text-xs font-semibold text-amber-800 mb-1">Next steps</p>
-                <ol className="space-y-1 text-xs text-amber-700 list-none">
+              <div className="mt-4 rounded-xl p-3 text-left" style={{ background: 'rgba(224,125,84,0.07)', border: '1px solid rgba(224,125,84,0.25)' }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: '#b95e2a' }}>Next steps</p>
+                <ol className="space-y-1 text-xs list-none" style={{ color: '#d06843' }}>
                   <li>① Log in with your new credentials</li>
                   <li>② Fill in your professional details (license, specialization…)</li>
                   <li>③ Wait for admin approval (1–2 business days)</li>
@@ -133,19 +136,19 @@ export default function DoctorRegisterPage() {
                 <Link
                   href={ROUTES.doctor.login}
                   className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold
-                    flex items-center justify-center hover:bg-primary/90 transition-colors"
+                    flex items-center justify-center hover:bg-neutral-900 transition-colors"
                 >
                   Login &amp; Complete Profile →
                 </Link>
                 <Link
                   href={ROUTES.doctor.landing}
-                  className="w-full h-11 rounded-xl border border-border text-sm text-muted-foreground
-                    flex items-center justify-center hover:bg-muted/40 transition-colors"
+                  className="w-full h-11 rounded-xl text-sm flex items-center justify-center transition-colors hover:opacity-80"
+                  style={{ border: '1px solid rgba(48,79,109,0.20)', color: '#6B7280', background: 'rgba(241,245,249,0.80)' }}
                 >
                   Back to Doctor Home
                 </Link>
               </div>
-            </div>
+            </AuthCard>
           </motion.div>
         ) : (
           /* ── Registration Form ─────────────────────────────────────────── */
@@ -157,20 +160,24 @@ export default function DoctorRegisterPage() {
             transition={{ duration: 0.35 }}
             className="w-full"
           >
-            <div className="bg-white rounded-2xl shadow-[0_2px_24px_rgba(0,0,0,0.08)] border border-border/50 p-7 sm:p-8">
+            <AuthCard>
               {/* Header */}
               <div className="mb-6 text-center">
-                <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-emerald-50 mb-4">
+                <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4" style={{ background: 'rgba(48,79,109,0.10)' }}>
                   <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
-                    <circle cx="16" cy="11" r="5" stroke="hsl(152 60% 38%)" strokeWidth="1.8"/>
-                    <path d="M6 28c0-5.523 4.477-10 10-10" stroke="hsl(152 60% 38%)" strokeWidth="1.8" strokeLinecap="round"/>
-                    <path d="M22 22v6m-3-3h6" stroke="hsl(152 60% 38%)" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="16" cy="11" r="5" fill="#304F6D" opacity=".15"/>
+                    <circle cx="16" cy="11" r="5" stroke="#304F6D" strokeWidth="1.8"/>
+                    <path d="M6 28c0-5.523 4.477-10 10-10" stroke="#304F6D" strokeWidth="1.8" strokeLinecap="round"/>
+                    <path d="M22 22v6m-3-3h6" stroke="#304F6D" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <h1 className="text-[1.4rem] font-bold tracking-tight text-foreground leading-tight">
+                <h1
+                  className="text-[1.4rem] font-bold tracking-tight leading-tight"
+                  style={{ color: '#1F2937', letterSpacing: '-0.03em', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+                >
                   Apply as a Doctor
                 </h1>
-                <p className="mt-1.5 text-sm text-muted-foreground">
+                <p className="mt-1.5 text-sm" style={{ color: '#6B7280' }}>
                   Join our network of verified healthcare professionals
                 </p>
               </div>
@@ -179,43 +186,41 @@ export default function DoctorRegisterPage() {
               <form onSubmit={handleSubmit(onSubmit)} noValidate aria-label="Doctor registration form" className="space-y-4">
                 {/* Full Name */}
                 <FieldBlock label="Full Name" htmlFor="fullName" error={errors.fullName?.message} required>
-                  <input
+                  <AuthInput
                     id="fullName"
                     type="text"
                     autoComplete="name"
                     placeholder="Dr. Priya Sharma"
                     disabled={loading}
-                    aria-invalid={!!errors.fullName}
+                    error={!!errors.fullName}
                     {...register('fullName')}
-                    className={fieldClass(!!errors.fullName)}
                   />
                 </FieldBlock>
 
                 {/* Email */}
                 <FieldBlock label="Email address" htmlFor="email" error={errors.email?.message} required>
-                  <input
+                  <AuthInput
                     id="email"
                     type="email"
                     autoComplete="email"
                     placeholder="doctor@hospital.com"
                     disabled={loading}
-                    aria-invalid={!!errors.email}
+                    error={!!errors.email}
                     {...register('email')}
-                    className={fieldClass(!!errors.email)}
                   />
                 </FieldBlock>
 
                 {/* Phone (optional) */}
                 <FieldBlock label="Phone Number" htmlFor="phoneNumber" error={errors.phoneNumber?.message} hint="Optional — used for patient communication">
-                  <input
+                  <AuthInput
                     id="phoneNumber"
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
                     placeholder="+91 98765 43210"
                     disabled={loading}
+                    error={!!errors.phoneNumber}
                     {...register('phoneNumber')}
-                    className={fieldClass(!!errors.phoneNumber)}
                   />
                 </FieldBlock>
 
@@ -255,13 +260,14 @@ export default function DoctorRegisterPage() {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-border text-primary cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded cursor-pointer accent-[#304F6D]"
+                    style={{ borderColor: 'rgba(48,79,109,0.30)' }}
                   />
-                  <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: '#6B7280' }}>
                     I agree to the{' '}
-                    <Link href="/terms" className="text-primary underline underline-offset-2 hover:text-primary/80">Terms of Service</Link>
+                    <Link href="/terms" className="underline underline-offset-2 font-medium hover:opacity-80" style={{ color: '#304F6D' }}>Terms of Service</Link>
                     {' '}and{' '}
-                    <Link href="/privacy" className="text-primary underline underline-offset-2 hover:text-primary/80">Privacy Policy</Link>.
+                    <Link href="/privacy" className="underline underline-offset-2 font-medium hover:opacity-80" style={{ color: '#304F6D' }}>Privacy Policy</Link>.
                     I confirm that all submitted information is accurate and complete.
                   </label>
                 </div>
@@ -289,41 +295,28 @@ export default function DoctorRegisterPage() {
                 </AnimatePresence>
 
                 {/* Submit */}
-                <button
+                <AuthButton
                   type="submit"
                   disabled={loading || !agreedToTerms}
-                  aria-busy={loading}
-                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold
-                    flex items-center justify-center gap-2
-                    hover:bg-primary/90 active:scale-[0.98] transition-all duration-150
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-                    disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                  loading={loading}
                 >
-                  {loading ? (
-                    <>
-                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                      </svg>
-                      Submitting application…
-                    </>
-                  ) : 'Submit Application'}
-                </button>
+                  Submit Application
+                </AuthButton>
               </form>
 
               {/* Sign in CTA */}
               <div className="mt-5 text-center">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm" style={{ color: '#6B7280' }}>
                   Already registered?{' '}
-                  <Link href={ROUTES.doctor.login} className="font-semibold text-primary hover:text-primary/80 transition-colors">
+                  <Link href={ROUTES.doctor.login} className="font-semibold transition-colors hover:opacity-80" style={{ color: '#304F6D' }}>
                     Sign in
                   </Link>
                 </p>
               </div>
-            </div>
+            </AuthCard>
 
             {/* Persistent form note */}
-            <p className="mt-3 text-center text-xs text-muted-foreground/60">
+            <p className="mt-3 text-center text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
               Your form progress is auto-saved during this session.
             </p>
           </motion.div>
@@ -334,14 +327,6 @@ export default function DoctorRegisterPage() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function fieldClass(hasError: boolean) {
-  return `w-full h-12 rounded-xl border-2 bg-background px-3.5 text-sm outline-none
-    transition-all placeholder:text-muted-foreground/50
-    focus:border-primary focus:ring-2 focus:ring-primary/15
-    disabled:opacity-50
-    ${hasError ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : 'border-border'}`;
-}
 
 function FieldBlock({
   label,
@@ -360,10 +345,10 @@ function FieldBlock({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-foreground mb-1.5">
+      <label htmlFor={htmlFor} className="block text-sm font-semibold mb-1.5" style={{ color: '#1F2937' }}>
         {label}
-        {required && <span className="text-destructive ml-0.5" aria-hidden="true">*</span>}
-        {hint && <span className="text-muted-foreground font-normal"> — {hint}</span>}
+        {required && <span style={{ color: '#ef4444', marginLeft: 2 }} aria-hidden="true">*</span>}
+        {hint && <span className="font-normal" style={{ color: '#6B7280' }}> — {hint}</span>}
       </label>
       {children}
       <AnimatePresence>

@@ -15,21 +15,22 @@ interface AuthInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'pr
 }
 
 export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
-  ({ error, prefix, suffix, className, ...props }, ref) => {
+  ({ error, prefix, suffix, className, style, ...props }, ref) => {
     if (prefix || suffix) {
       return (
         <div
           className={cn(
-            'flex h-12 items-center overflow-hidden rounded-xl border-2 bg-background',
-            'transition-all duration-150',
+            'flex h-12 items-center overflow-hidden rounded-xl border',
+            'transition-all duration-200',
             error
-              ? 'border-destructive focus-within:ring-2 focus-within:ring-destructive/20'
-              : 'border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
+              ? 'border-red-400 focus-within:ring-2 focus-within:ring-red-400/15'
+              : 'border-slate-200 focus-within:border-[#304F6D] focus-within:ring-2 focus-within:ring-[#304F6D]/15',
             props.disabled && 'cursor-not-allowed opacity-50'
           )}
+          style={{ background: 'rgba(255,255,255,0.85)' }}
         >
           {prefix && (
-            <div className="flex-shrink-0 pl-3.5 pr-1 text-muted-foreground">
+            <div className="flex-shrink-0 pl-3.5 pr-1" style={{ color: '#6B7280' }}>
               {prefix}
             </div>
           )}
@@ -37,13 +38,14 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
             ref={ref}
             {...props}
             className={cn(
-              'h-full flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/60',
+              'h-full flex-1 bg-transparent px-3 text-sm outline-none',
               'disabled:cursor-not-allowed',
               className
             )}
+            style={{ color: '#1F2937', ...style } as React.CSSProperties}
           />
           {suffix && (
-            <div className="flex-shrink-0 pl-1 pr-3.5 text-muted-foreground">
+            <div className="flex-shrink-0 pl-1 pr-3.5" style={{ color: '#6B7280' }}>
               {suffix}
             </div>
           )}
@@ -56,15 +58,16 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
         ref={ref}
         {...props}
         className={cn(
-          'h-12 w-full rounded-xl border-2 bg-background px-3.5 text-sm',
-          'outline-none placeholder:text-muted-foreground/60',
-          'transition-all duration-150',
+          'h-12 w-full rounded-xl border px-3.5 text-sm',
+          'outline-none',
+          'transition-all duration-200',
           error
-            ? 'border-destructive focus:ring-2 focus:ring-destructive/20'
-            : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/20',
+            ? 'border-red-400 focus:ring-2 focus:ring-red-400/15'
+            : 'border-slate-200 focus:border-[#304F6D] focus:ring-2 focus:ring-[#304F6D]/15',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
+        style={{ background: 'rgba(255,255,255,0.85)', color: '#1F2937', ...style } as React.CSSProperties}
       />
     );
   }

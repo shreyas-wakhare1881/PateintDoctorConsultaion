@@ -359,25 +359,33 @@ function AdminDoctorsContent() {
   const pendingCount = pendingData?.totalCount ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div
+      className="-mx-5 -my-5 md:-mx-7 md:-my-6 p-5 md:p-8 pb-24 md:pb-10 space-y-5"
+      style={{ background: '#E6E1DD', minHeight: '100%', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", letterSpacing: '-0.01em' }}
+    >
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Doctor Management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.03em' }}>Doctor Management</h1>
+        <p className="mt-1 text-sm" style={{ color: '#6B7280' }}>
           Review, approve, reject, suspend and reactivate doctor accounts.
         </p>
       </div>
 
       <Tabs.Root value={activeTab} onValueChange={(v) => setActiveTab(v as DoctorApprovalStatus)}>
-        <Tabs.List className="flex gap-1 rounded-xl border bg-muted/40 p-1">
+        {/* Glass pill tab list */}
+        <Tabs.List className="inline-flex gap-1 rounded-2xl p-1" style={{ background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.40)' }}>
           {TABS.map((tab) => (
             <Tabs.Trigger
               key={tab.value}
               value={tab.value}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              className="flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200"
+              style={activeTab === tab.value
+                ? { background: '#304F6D', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(48,79,109,0.25)' }
+                : { color: '#6B7280' }}
             >
               {tab.label}
               {tab.value === 'Pending' && pendingCount > 0 && (
-                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">
+                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs font-bold text-white"
+                  style={{ background: '#E07D54' }}>
                   {pendingCount}
                 </span>
               )}
@@ -385,7 +393,7 @@ function AdminDoctorsContent() {
           ))}
         </Tabs.List>
 
-        <div className="mt-6">
+        <div className="mt-5">
           <Tabs.Content value="Pending" forceMount className="data-[state=inactive]:hidden">
             <PendingTab />
           </Tabs.Content>

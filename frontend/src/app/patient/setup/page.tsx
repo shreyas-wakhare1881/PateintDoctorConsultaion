@@ -156,9 +156,13 @@ function SetupForm() {
                     className={cn(
                       'rounded-lg border-2 px-3 py-1 text-xs font-semibold transition-all',
                       selectedBloodGroup === bg
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-border bg-background text-foreground hover:border-emerald-300'
+                        ? 'text-white'
+                        : 'border-border bg-background text-foreground'
                     )}
+                    style={selectedBloodGroup === bg
+                      ? { borderColor: '#304F6D', background: '#304F6D' }
+                      : { }
+                    }
                   >
                     {bg}
                   </button>

@@ -14,16 +14,39 @@ interface StatCardProps {
 
 const VARIANT_CLASSES = {
   default: 'border-border',
-  warning: 'border-amber-200 bg-amber-50/50',
-  danger: 'border-red-200 bg-red-50/50',
-  success: 'border-emerald-200 bg-emerald-50/50',
+  warning: '',
+  danger:  '',
+  success: '',
+};
+
+const VARIANT_STYLES = {
+  default: {},
+  warning: { background: 'rgba(224,125,84,0.08)', borderColor: 'rgba(224,125,84,0.25)' },
+  danger:  { background: 'rgba(239,68,68,0.08)',  borderColor: 'rgba(239,68,68,0.22)'  },
+  success: { background: 'rgba(137,148,129,0.12)', borderColor: 'rgba(137,148,129,0.30)' },
 };
 
 const VALUE_CLASSES = {
   default: 'text-foreground',
-  warning: 'text-amber-700',
-  danger: 'text-red-700',
-  success: 'text-emerald-700',
+  warning: '',
+  danger:  '',
+  success: '',
+};
+
+const VALUE_STYLES = {
+  default: {},
+  warning: { color: '#E07D54' },
+  danger:  { color: '#EF4444' },
+  success: { color: '#899481' },
+};
+
+const GLASS_BASE: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.72)',
+  backdropFilter: 'blur(18px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.45)',
+  boxShadow: '0 8px 32px rgba(48,79,109,0.09)',
+  borderRadius: 20,
 };
 
 export function StatCard({
@@ -35,6 +58,12 @@ export function StatCard({
   className,
 }: StatCardProps) {
   const isClickable = !!onClick;
+  const overrideStyle: React.CSSProperties = {
+    ...GLASS_BASE,
+    ...(variant === 'warning' ? { background: 'rgba(255,225,160,0.45)', border: '1px solid rgba(224,158,0,0.20)' } : {}),
+    ...(variant === 'danger'  ? { background: 'rgba(239,68,68,0.07)',   border: '1px solid rgba(239,68,68,0.22)' }  : {}),
+    ...(variant === 'success' ? { background: 'rgba(137,148,129,0.13)', border: '1px solid rgba(137,148,129,0.28)' } : {}),
+  };
   return (
     <div
       role={isClickable ? 'button' : undefined}
@@ -42,16 +71,31 @@ export function StatCard({
       onClick={onClick}
       onKeyDown={isClickable ? (e) => e.key === 'Enter' && onClick?.() : undefined}
       className={cn(
-        'rounded-xl border bg-card p-5 shadow-sm',
-        VARIANT_CLASSES[variant],
-        isClickable && 'cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40',
+        'p-5',
+        isClickable && 'cursor-pointer focus:outline-none',
         className
       )}
+      style={{
+        ...overrideStyle,
+        transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+        fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
+      }}
+      onMouseEnter={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 16px 40px rgba(48,79,109,0.14)'; } : undefined}
+      onMouseLeave={isClickable ? (e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(48,79,109,0.09)'; } : undefined}
     >
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className={cn('mt-1 text-3xl font-bold tabular-nums', VALUE_CLASSES[variant])}>{value}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#6B7280' }}>{label}</p>
+      <p
+        className="mt-2 text-3xl font-bold tabular-nums"
+        style={{
+          letterSpacing: '-0.04em',
+          color: variant === 'warning' ? '#8a6a00'
+               : variant === 'danger'  ? '#EF4444'
+               : variant === 'success' ? '#596550'
+               : '#304F6D',
+        }}
+      >{value}</p>
       {description && (
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className="mt-1 text-xs" style={{ color: '#6B7280' }}>{description}</p>
       )}
     </div>
   );
@@ -59,17 +103,17 @@ export function StatCard({
 
 export function StatCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('rounded-xl border bg-card p-5 shadow-sm', className)}>
-      <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-      <div className="mt-2 h-8 w-16 animate-pulse rounded bg-muted" />
+    <div className={cn('p-5', className)} style={{ ...GLASS_BASE }}>
+      <div className="h-3 w-20 animate-pulse rounded" style={{ background: 'rgba(48,79,109,0.10)' }} />
+      <div className="mt-3 h-8 w-14 animate-pulse rounded" style={{ background: 'rgba(48,79,109,0.10)' }} />
     </div>
   );
 }
 
 export function StatGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-      {Array.from({ length: 6 }).map((_, i) => (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
         <StatCardSkeleton key={i} />
       ))}
     </div>
