@@ -52,8 +52,9 @@ function DoctorPendingPageContent() {
             <AuthIllustration type="pending" className="w-32 h-32" />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 text-xs font-medium px-3 py-1 rounded-full mb-4">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full mb-4"
+            style={{ background: 'rgba(224,125,84,0.12)', color: '#E07D54' }}>
+            <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: '#E07D54' }} />
             Under Review
           </div>
 

@@ -4,12 +4,12 @@
  * DashboardLayout — wraps all /patient/*, /doctor/*, /admin/* pages.
  * Source of truth: frontend/SDD/*.md — Route Structure
  *
- * Desktop: fixed sidebar + scrollable main content.
- * Mobile: full-width content + fixed bottom navigation.
+ * Layout: TopNavbar (full-width) + scrollable page content.
+ * Mobile: full-width content + fixed MobileBottomNav.
+ * Sidebar removed — replaced by TopNavbar.
  */
 
-import { Sidebar } from './sidebar';
-import { Header } from './header';
+import { TopNavbar } from './top-navbar';
 import { MobileBottomNav } from './mobile-bottom-nav';
 
 interface DashboardLayoutProps {
@@ -17,21 +17,19 @@ interface DashboardLayoutProps {
   title?: string;
 }
 
-export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop sidebar */}
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-hidden" style={{ background: '#E6E1DD' }}>
+      {/* Top navigation bar */}
+      <TopNavbar />
 
-      {/* Main area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header title={title} />
-
-        {/* Scrollable page content */}
-        <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6">
-          {children}
-        </main>
-      </div>
+      {/* Scrollable page content — default padding for all sub-pages */}
+      <main
+        className="flex-1 overflow-y-auto px-5 py-5 pb-24 md:px-7 md:py-6 md:pb-7"
+        style={{ background: '#E6E1DD' }}
+      >
+        {children}
+      </main>
 
       {/* Mobile bottom nav */}
       <MobileBottomNav />

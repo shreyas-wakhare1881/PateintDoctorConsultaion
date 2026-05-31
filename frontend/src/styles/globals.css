@@ -6,56 +6,91 @@
   /* ── Healthcare Design System — Teal + Warm Slate ───────────────────────── */
   :root {
     /* Surfaces */
-    --background: 210 20% 98%;          /* warm off-white */
-    --foreground: 215 28% 10%;          /* deep slate — headings */
+    --background: 0 0% 100%;            /* #FFFFFF main */
+    --foreground: 215 28% 10%;          /* deep slate */
 
     /* Card / Popover */
-    --card: 0 0% 100%;
+    --card: 0 0% 100%;                  /* #FFFFFF card */
     --card-foreground: 215 28% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 10%;
 
-    /* Primary — calm teal */
-    --primary: 174 62% 37%;             /* #22a898 — medical teal */
-    --primary-foreground: 0 0% 100%;
+    /* Primary — black for buttons */
+    --primary: 0 0% 0%;                 /* #000000 */
+    --primary-foreground: 0 0% 100%;    /* #FFFFFF text */
 
-    /* Secondary — soft slate */
-    --secondary: 210 16% 93%;
+    /* Secondary — soft gray */
+    --secondary: 210 16% 96%;
     --secondary-foreground: 215 22% 24%;
 
     /* Muted — body copy & labels */
-    --muted: 210 16% 95%;
-    --muted-foreground: 215 20% 38%;    /* was 48% — now WCAG AA ✓ (~5.5:1 on white) */
+    --muted: 210 16% 96%;
+    --muted-foreground: 215 16% 45%;    /* WCAG AA compliant */
 
-    /* Accent — warm emerald */
-    --accent: 152 48% 92%;
-    --accent-foreground: 152 60% 22%;
+    /* Accent — soft blue highlight background */
+    --accent: 206 100% 96%;
+    --accent-foreground: 206 100% 40%;
 
     /* Destructive */
     --destructive: 4 86% 52%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders + Inputs */
-    --border: 214 20% 86%;
-    --input: 214 20% 86%;
-    --ring: 174 62% 37%;
-    --radius: 0.75rem;
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 206 100% 59%;               /* #2FA5FF focus ring */
+    --radius: 0.85rem;
 
     /* Healthcare-specific tokens */
-    --surface-subtle: 210 20% 96%;
+    --surface-subtle: 210 20% 97%;
     --surface-card: 0 0% 100%;
-    --teal-50: 174 100% 97%;
-    --teal-100: 174 86% 90%;
-    --teal-500: 174 62% 37%;
-    --teal-600: 174 62% 30%;
-    --emerald-50: 152 76% 96%;
-    --emerald-500: 152 60% 38%;
+    --teal-50: 206 100% 97%;
+    --teal-100: 206 100% 92%;
+    --teal-500: 206 100% 59%;
+    --teal-600: 206 100% 45%;
+    --emerald-50: 206 100% 97%;
+    --emerald-500: 206 100% 59%;
     --slate-50: 210 20% 98%;
     --slate-100: 210 16% 93%;
     --slate-200: 214 20% 86%;
-    --slate-400: 215 16% 52%;           /* readable helper text */
-    --slate-600: 215 22% 34%;           /* body copy */
-    --slate-900: 215 28% 10%;           /* headings */
+    --slate-400: 215 16% 52%;
+    --slate-600: 215 22% 34%;
+    --slate-900: 215 28% 10%;
+
+    /* ── Dashboard Design System Tokens ──────────────────────────────── */
+    --ds-page-bg: 210 40% 97%;          /* #F4F7FB page background */
+    --ds-sidebar-bg: 222 47% 11%;       /* #0F172A dark sidebar */
+    --ds-sidebar-hover: 217 32% 17%;    /* #1E293B hover */
+    --ds-sidebar-active-bg: 206 100% 15%; /* blue-tinted active pill bg */
+    --ds-sidebar-active-text: 206 100% 59%; /* #2FA5FF */
+    --ds-sidebar-text: 215 20% 65%;     /* slate-400 muted nav text */
+    --ds-sidebar-border: 217 32% 17%;
+    --ds-card-hover-shadow: 0 8px 24px rgba(47,165,255,0.08);
+    --ds-stat-blue: 206 100% 59%;       /* #2FA5FF */
+    --ds-stat-green: 160 84% 39%;       /* #10B981 */
+    --ds-stat-red: 4 86% 58%;           /* #EF4444 */
+    --ds-stat-amber: 38 92% 50%;        /* #F59E0B */
+    --ds-stat-purple: 262 83% 58%;      /* #7C3AED */
+
+    /* ── Energy Palette — Premium Healthcare SaaS (Source of Truth) ────── */
+    --navy-primary:    #304F6D;
+    --sage-primary:    #899481;
+    --orange-accent:   #E07D54;
+    --gold-accent:     #f7cf79;
+    --info-blue:       #E2F3FD;
+    --neutral-surface: #E6E1DD;
+    --text-primary:    #1F2937;
+    --text-secondary:  #6B7280;
+    --white:           #FFFFFF;
+
+    /* Glass system */
+    --glass-card-bg:           rgba(255,255,255,0.70);
+    --glass-card-border:       rgba(255,255,255,0.20);
+    --glass-card-shadow:       0 8px 32px rgba(48,79,109,0.08);
+    --glass-card-hover-shadow: 0 16px 40px rgba(48,79,109,0.14);
+    --glass-navbar-bg:         rgba(255,255,255,0.60);
+    --glass-navbar-shadow:     0 8px 32px rgba(48,79,109,0.08);
+    --energy-transition:       all 0.3s cubic-bezier(0.4,0,0.2,1);
   }
 
   .dark {
@@ -65,19 +100,19 @@
     --card-foreground: 210 20% 94%;
     --popover: 215 28% 11%;
     --popover-foreground: 210 20% 94%;
-    --primary: 174 56% 45%;
+    --primary: 0 0% 100%;              /* White button in dark mode */
     --primary-foreground: 215 28% 9%;
     --secondary: 215 20% 17%;
     --secondary-foreground: 210 20% 78%;
     --muted: 215 20% 17%;
-    --muted-foreground: 215 16% 62%;    /* lighter in dark mode — still WCAG AA */
-    --accent: 152 40% 16%;
-    --accent-foreground: 152 56% 72%;
+    --muted-foreground: 215 16% 62%;
+    --accent: 206 40% 16%;
+    --accent-foreground: 206 100% 70%;
     --destructive: 4 76% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 215 20% 20%;
     --input: 215 20% 20%;
-    --ring: 174 56% 45%;
+    --ring: 206 100% 59%;
   }
 }
 
@@ -87,8 +122,11 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-inter), Inter, 'Inter var', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -112,6 +150,7 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      animation-delay: 0s !important;
     }
   }
 }
@@ -122,19 +161,71 @@
     color: transparent;
     text-shadow: 0 0 0 hsl(var(--foreground));
   }
-  /* Auth surface gradient — soft teal → off-white → soft emerald */
+  /* Auth surface gradient — soft blue -> off-white */
   .auth-gradient {
     background: linear-gradient(
-      145deg,
-      hsl(174 100% 97%) 0%,
-      hsl(210 20% 98%) 50%,
-      hsl(152 76% 96%) 100%
+      135deg,
+      rgba(255, 240, 251, 0.4) 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(224, 242, 254, 0.4) 100%
     );
   }
   /* Auth card shadow — premium but subtle */
   .auth-card-shadow {
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.06);
   }
+  /* Glassmorphism card utility */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(255, 255, 255, 0.5) inset;
+  }
+  .glass-card-dark {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Dashboard Card System ────────────────────────────────────────── */
+  .ds-card {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .ds-card:hover {
+    box-shadow: 0 4px 20px rgba(47,165,255,0.10);
+    transform: translateY(-1px);
+  }
+  .ds-stat-card {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .ds-action-card {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .ds-action-card:hover {
+    box-shadow: 0 8px 24px rgba(47,165,255,0.12);
+    transform: translateY(-2px);
+  }
+
+  /* Status badge system */
+  .status-pending  { background:#FEF3C7; color:#92400E; border-color:#FDE68A; }
+  .status-confirmed{ background:#DBEAFE; color:#1E40AF; border-color:#BFDBFE; }
+  .status-inprogress{ background:#E0F2FE; color:#0369A1; border-color:#BAE6FD; }
+  .status-completed{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
+  .status-cancelled{ background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
+  .status-rejected { background:#F3E8FF; color:#6B21A8; border-color:#E9D5FF; }
+  .status-noshow   { background:#F1F5F9; color:#475569; border-color:#CBD5E1; }
 }
 
 /* ── Session Loader Animations ──────────────────────────────────────────────── */

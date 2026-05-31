@@ -22,10 +22,10 @@ function AdminDashboardContent() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="-mx-5 -my-5 md:-mx-7 md:-my-6 p-5 md:p-8 space-y-6" style={{ background: '#E6E1DD', minHeight: '100%' }}>
         <div>
-          <div className="h-7 w-48 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-muted" />
+          <div className="h-7 w-48 animate-pulse rounded-xl" style={{ background: 'rgba(48,79,109,0.10)' }} />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded-xl" style={{ background: 'rgba(48,79,109,0.07)' }} />
         </div>
         <StatGridSkeleton />
       </div>
@@ -41,12 +41,13 @@ function AdminDashboardContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div
+      className="-mx-5 -my-5 md:-mx-7 md:-my-6 p-5 md:p-8 pb-24 md:pb-10 space-y-6"
+      style={{ background: '#E6E1DD', minHeight: '100%', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", letterSpacing: '-0.01em' }}
+    >
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Platform operational overview
-        </p>
+        <h1 className="text-2xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.03em' }}>Admin Dashboard</h1>
+        <p className="mt-1 text-sm" style={{ color: '#6B7280' }}>Platform operational overview</p>
       </div>
 
       {/* Stats Grid */}
@@ -92,26 +93,28 @@ function AdminDashboardContent() {
         />
       </div>
 
-      {/* Quick Actions */}
+      {/* Pending approvals alert */}
       {data.pendingDoctors > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-amber-900">
-                {data.pendingDoctors} Doctor{data.pendingDoctors !== 1 ? 's' : ''} Awaiting Approval
-              </h2>
-              <p className="mt-0.5 text-sm text-amber-700">
-                Review pending doctor applications to unlock their dashboard access.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push(ROUTES.admin.doctors)}
-              className="ml-4 shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
-            >
-              Review Now
-            </button>
+        <div
+          className="flex items-center justify-between gap-4 rounded-2xl p-5"
+          style={{ background: 'rgba(255,225,160,0.35)', border: '1px solid rgba(224,158,0,0.22)', backdropFilter: 'blur(12px)' }}
+        >
+          <div>
+            <h2 className="font-bold" style={{ color: '#8a6a00' }}>
+              {data.pendingDoctors} Doctor{data.pendingDoctors !== 1 ? 's' : ''} Awaiting Approval
+            </h2>
+            <p className="mt-0.5 text-sm" style={{ color: '#a07000' }}>
+              Review pending doctor applications to unlock their dashboard access.
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => router.push(ROUTES.admin.doctors)}
+            className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition-all hover:opacity-90"
+            style={{ background: '#E07D54', color: '#000000', boxShadow: '0 4px 12px rgba(224,125,84,0.30)' }}
+          >
+            Review Now
+          </button>
         </div>
       )}
     </div>

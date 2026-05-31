@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * Patient — Find Doctors  (Sprint 1 NLP Edition)
@@ -18,7 +18,6 @@
 
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { PatientGuard } from '@/guards/patient.guard';
 import {
@@ -34,6 +33,7 @@ import type {
   SearchSuggestion,
 } from '@/modules/doctor/types/doctor.types';
 import { EmptyState } from '@/components/shared/empty-state';
+import { DoctorAvatar } from '@/components/shared/DoctorAvatar';
 import { ROUTES } from '@/config/routes';
 
 const PAGE_SIZE = 12;
@@ -94,66 +94,228 @@ function SuggestionsDropdown({
 
 // ── Doctor card ────────────────────────────────────────────────────────────────
 function DoctorCard({ doctor }: { doctor: DoctorDiscoveryResult }) {
+  const [hovered, setHovered] = useState(false);
+  const stars = doctor.rating != null ? Math.round(doctor.rating) : 0;
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start gap-3">
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
-          {doctor.profileImageUrl ? (
-            <Image src={doctor.profileImageUrl} alt={doctor.fullName} fill className="object-cover" sizes="48px" unoptimized />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
-              {doctor.fullName.charAt(0).toUpperCase()}
+    <div
+      className="relative overflow-hidden"
+      style={{
+        borderRadius: 24,
+        height: 360,
+        cursor: 'pointer',
+        transform: hovered ? 'translateY(-6px) scale(1.012)' : 'translateY(0) scale(1)',
+        boxShadow: hovered
+          ? '0 28px 64px rgba(48,79,109,0.22), 0 8px 24px rgba(48,79,109,0.10)'
+          : '0 4px 24px rgba(48,79,109,0.11)',
+        transition: 'all 0.42s cubic-bezier(0.4,0,0.2,1)',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* ── Layer 1: Navy gradient background ──────────────────── */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(155deg, #304F6D 0%, #1d3347 55%, #4a5e50 100%)' }}
+      >
+        <div className="pointer-events-none absolute -top-10 -right-10 rounded-full" style={{ width: 170, height: 170, background: 'rgba(255,225,160,0.10)' }} />
+        <div className="pointer-events-none absolute bottom-28 -left-8 rounded-full" style={{ width: 110, height: 110, background: 'rgba(255,255,255,0.05)' }} />
+        <div className="pointer-events-none absolute top-8 left-8 rounded-full" style={{ width: 60, height: 60, background: 'rgba(137,148,129,0.12)' }} />
+      </div>
+
+      {/* ── Layer 2: Avatar + static rating (default view) ─────── */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+        style={{ paddingBottom: 108 }}
+      >
+        {/* Avatar */}
+        <div
+          style={{
+            transform: hovered ? 'scale(0.80) translateY(-6px)' : 'scale(1) translateY(0)',
+            transition: 'transform 0.42s cubic-bezier(0.4,0,0.2,1)',
+            borderRadius: '50%',
+            border: '2.5px solid rgba(255,255,255,0.32)',
+            boxShadow: '0 10px 36px rgba(0,0,0,0.25)',
+            overflow: 'hidden',
+          }}
+        >
+          <DoctorAvatar
+            seed={doctor.doctorId}
+            profileImageUrl={doctor.profileImageUrl}
+            name={doctor.fullName}
+            size={88}
+            style={{ display: 'block' }}
+          />
+        </div>
+
+        {/* Stars (fade out on hover) */}
+        <div
+          style={{
+            opacity: hovered ? 0 : 1,
+            transform: hovered ? 'translateY(10px)' : 'translateY(0)',
+            transition: 'all 0.28s ease',
+            display: 'flex', alignItems: 'center', gap: 2,
+          }}
+        >
+          {Array.from({ length: 5 }).map((_, i) => (
+            <svg key={i} className="h-3.5 w-3.5" fill={i < stars ? '#FFE1A0' : 'none'} viewBox="0 0 24 24" stroke="#FFE1A0" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.563.563 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+            </svg>
+          ))}
+          <span style={{ color: 'rgba(255,225,160,0.65)', fontSize: 11, marginLeft: 3 }}>
+            ({doctor.totalReviews ?? 0})
+          </span>
+        </div>
+      </div>
+
+      {/* ── Layer 3: Dark overlay (appears on hover) ────────────── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'rgba(0,0,0,0.35)',
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.35s ease',
+        }}
+      />
+
+      {/* ── Layer 4: Static name strip (slides away on hover) ────── */}
+      <div
+        className="absolute bottom-0 left-0 right-0"
+        style={{
+          background: 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          padding: '14px 20px 18px',
+          borderTop: '1px solid rgba(255,255,255,0.50)',
+          transform: hovered ? 'translateY(100%)' : 'translateY(0)',
+          transition: 'transform 0.42s cubic-bezier(0.4,0,0.2,1)',
+        }}
+      >
+        <p className="truncate font-bold" style={{ color: '#1F2937', fontSize: 15, letterSpacing: '-0.02em' }}>
+          {doctor.fullName}
+        </p>
+        <div className="mt-1.5 flex items-center justify-between">
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: '#E2F3FD', color: '#304F6D' }}>
+            {doctor.specialization ?? 'General Physician'}
+          </span>
+          <span className="font-bold" style={{ color: '#304F6D', fontSize: 14 }}>
+            {doctor.consultationFee != null ? `₹${doctor.consultationFee}` : '—'}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Layer 5: Sliding reveal panel (slides up on hover) ───── */}
+      <div
+        className="absolute bottom-0 left-0 right-0"
+        style={{
+          background: 'rgba(255,255,255,0.98)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          padding: '20px 20px 22px',
+          transform: hovered ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.42s cubic-bezier(0.4,0,0.2,1)',
+          borderTop: '1px solid rgba(48,79,109,0.09)',
+          zIndex: 10,
+        }}
+      >
+        {/* Name + fee header */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-bold truncate" style={{ color: '#1F2937', fontSize: 15, letterSpacing: '-0.02em' }}>
+              {doctor.fullName}
+            </p>
+            <span className="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold mt-1" style={{ background: '#304F6D', color: '#FFFFFF' }}>
+              {doctor.specialization ?? 'General Physician'}
+            </span>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="font-bold" style={{ color: '#304F6D', fontSize: 18, letterSpacing: '-0.03em' }}>
+              {doctor.consultationFee != null ? `₹${doctor.consultationFee}` : '—'}
+            </p>
+            <p style={{ color: '#6B7280', fontSize: 10, marginTop: 1 }}>per consult</p>
+          </div>
+        </div>
+
+        {/* Hospital */}
+        {doctor.hospitalName && (
+          <p className="flex items-center gap-1.5 truncate text-xs mb-2.5" style={{ color: '#6B7280' }}>
+            <svg className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#899481' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" /></svg>
+            <span className="truncate">{doctor.hospitalName}</span>
+          </p>
+        )}
+
+        {/* City + Experience */}
+        <div className="flex items-center justify-between text-xs mb-3">
+          <span className="flex items-center gap-1 truncate" style={{ color: '#6B7280' }}>
+            <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <span className="truncate">{[doctor.city, doctor.state].filter(Boolean).join(', ') || '—'}</span>
+          </span>
+          {doctor.experienceYears != null && (
+            <span className="font-semibold shrink-0 ml-2" style={{ color: '#304F6D' }}>
+              {doctor.experienceYears} yrs exp
             </span>
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-foreground">{doctor.fullName}</p>
-          <p className="truncate text-xs font-medium text-primary">{doctor.specialization ?? 'General Physician'}</p>
-          {doctor.qualification && <p className="truncate text-xs text-muted-foreground">{doctor.qualification}</p>}
-        </div>
-      </div>
-      {doctor.hospitalName && (
-        <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-          <span>Hospital:</span><span className="truncate">{doctor.hospitalName}</span>
-        </p>
-      )}
-      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-        <span className="text-muted-foreground">{doctor.experienceYears != null ? `${doctor.experienceYears} yrs exp` : '-'}</span>
-        <span className="truncate text-right text-muted-foreground">{[doctor.city, doctor.state].filter(Boolean).join(', ') || '-'}</span>
-        <span className="text-muted-foreground">{doctor.rating != null ? `${doctor.rating.toFixed(1)} stars (${doctor.totalReviews})` : 'No reviews'}</span>
-        <span className="text-right font-semibold text-foreground">{doctor.consultationFee != null ? `Rs.${doctor.consultationFee}` : '-'}</span>
-      </div>
-      {doctor.languagesSpoken.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {doctor.languagesSpoken.slice(0, 3).map((lang) => (
-            <span key={lang} className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{lang}</span>
-          ))}
-          {doctor.languagesSpoken.length > 3 && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">+{doctor.languagesSpoken.length - 3}</span>
+
+        {/* Rating + Languages */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <svg key={i} className="h-3 w-3" fill={i < stars ? '#E07D54' : 'none'} viewBox="0 0 24 24" stroke="#E07D54" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.563.563 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+              </svg>
+            ))}
+            <span style={{ color: '#6B7280', fontSize: 10, marginLeft: 3 }}>
+              {doctor.rating != null ? doctor.rating.toFixed(1) : '—'} ({doctor.totalReviews ?? 0})
+            </span>
+          </div>
+          {doctor.languagesSpoken.length > 0 && (
+            <div className="flex gap-1">
+              {doctor.languagesSpoken.slice(0, 2).map((lang) => (
+                <span key={lang} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'rgba(48,79,109,0.07)', color: '#304F6D' }}>{lang}</span>
+              ))}
+              {doctor.languagesSpoken.length > 2 && (
+                <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'rgba(137,148,129,0.12)', color: '#596550' }}>+{doctor.languagesSpoken.length - 2}</span>
+              )}
+            </div>
           )}
         </div>
-      )}
-      <Link href={ROUTES.patient.doctorProfile(doctor.doctorId)} className="mt-auto flex h-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-        View Profile
-      </Link>
+
+        {/* CTA */}
+        <Link
+          href={ROUTES.patient.doctorProfile(doctor.doctorId)}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ background: '#E07D54', color: '#000000', boxShadow: '0 4px 16px rgba(224,125,84,0.35)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+          View Profile
+        </Link>
+      </div>
     </div>
   );
 }
 
 function DoctorCardSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
-        <div className="flex-1 space-y-1.5">
-          <div className="h-4 w-3/4 rounded bg-muted" />
-          <div className="h-3 w-1/2 rounded bg-muted" />
+    <div
+      className="relative overflow-hidden animate-pulse"
+      style={{ borderRadius: 24, height: 360, background: 'rgba(48,79,109,0.08)' }}
+    >
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, rgba(48,79,109,0.15) 0%, rgba(48,79,109,0.10) 100%)' }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ paddingBottom: 108 }}>
+        <div className="rounded-full" style={{ width: 88, height: 88, background: 'rgba(255,255,255,0.15)' }} />
+        <div className="flex gap-1">
+          {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-3.5 w-3.5 rounded-full" style={{ background: 'rgba(255,225,160,0.25)' }} />)}
         </div>
       </div>
-      <div className="h-3 w-2/3 rounded bg-muted" />
-      <div className="grid grid-cols-2 gap-2"><div className="h-3 rounded bg-muted" /><div className="h-3 rounded bg-muted" /></div>
-      <div className="flex gap-1"><div className="h-5 w-12 rounded-full bg-muted" /><div className="h-5 w-14 rounded-full bg-muted" /></div>
-      <div className="h-9 rounded-lg bg-muted" />
+      <div className="absolute bottom-0 left-0 right-0" style={{ background: 'rgba(255,255,255,0.90)', padding: '14px 20px 18px' }}>
+        <div className="h-4 w-3/4 rounded-lg mb-2" style={{ background: 'rgba(48,79,109,0.09)' }} />
+        <div className="flex justify-between">
+          <div className="h-5 w-1/3 rounded-full" style={{ background: 'rgba(48,79,109,0.07)' }} />
+          <div className="h-4 w-12 rounded-lg" style={{ background: 'rgba(48,79,109,0.07)' }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -194,8 +356,14 @@ function FilterSelect({ label, value, options, placeholder, onChange, loading }:
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={loading} className="h-9 rounded-lg border bg-background px-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60">
+      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6B7280' }}>{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={loading}
+        className="h-9 rounded-xl border bg-white px-2.5 text-sm outline-none transition-all focus:ring-2 disabled:opacity-60"
+        style={{ borderColor: 'rgba(48,79,109,0.12)', color: '#1E293B', boxShadow: 'none' }}
+      >
         <option value="">{placeholder}</option>
         {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
       </select>
@@ -205,9 +373,17 @@ function FilterSelect({ label, value, options, placeholder, onChange, loading }:
 
 function ActiveFilterBadge({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+      style={{ background: '#E2F3FD', color: '#304F6D', border: '1px solid rgba(48,79,109,0.15)' }}
+    >
       {label}
-      <button onClick={onRemove} className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-primary/20" aria-label={`Remove ${label}`}>x</button>
+      <button
+        onClick={onRemove}
+        className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full transition-all hover:opacity-70"
+        style={{ background: 'rgba(48,79,109,0.15)', color: '#304F6D' }}
+        aria-label={`Remove ${label}`}
+      >×</button>
     </span>
   );
 }
@@ -334,19 +510,25 @@ function FindDoctorsContent() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div
+      className="-mx-5 -my-5 md:-mx-7 md:-my-6 p-5 md:p-8 pb-24 md:pb-10 space-y-6"
+      style={{ background: '#E6E1DD', minHeight: '100%', fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+    >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Find a Doctor</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.02em' }}>Find a Doctor</h1>
+          <p className="mt-0.5 text-sm" style={{ color: '#6B7280' }}>
             Search naturally: &ldquo;heart doctor in Pune under 1000&rdquo; or use filters below.
           </p>
         </div>
         {totalCount > 0 && !isLoading && (
-          <p className="self-end whitespace-nowrap text-sm text-muted-foreground sm:self-auto">
+          <span
+            className="self-end whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold sm:self-auto"
+            style={{ background: '#E2F3FD', color: '#304F6D' }}
+          >
             {totalCount} {totalCount === 1 ? 'doctor' : 'doctors'} found
-          </p>
+          </span>
         )}
       </div>
 
@@ -354,12 +536,15 @@ function FindDoctorsContent() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           {/* Search icon */}
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#6B7280' }}>
             &#128269;
           </span>
           {/* NLP badge */}
           {isNlpMode && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            <span
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-[10px] font-bold"
+              style={{ background: '#E2F3FD', color: '#304F6D' }}
+            >
               Smart
             </span>
           )}
@@ -371,7 +556,8 @@ function FindDoctorsContent() {
             onChange={(e) => setLocalSearch(e.target.value)}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-            className="h-10 w-full rounded-lg border bg-background pl-8 pr-16 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="h-10 w-full rounded-xl border bg-white pl-8 pr-16 text-sm outline-none transition-all focus:ring-2"
+            style={{ borderColor: '#E2E8F0', color: '#1E293B' }}
           />
           {/* Suggestions dropdown */}
           {showSuggestions && (
@@ -382,12 +568,18 @@ function FindDoctorsContent() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <label className="whitespace-nowrap text-sm text-muted-foreground">Sort:</label>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+          <label className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide" style={{ color: '#6B7280' }}>Sort:</label>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="h-10 rounded-xl border bg-white px-3 text-sm outline-none transition-all focus:ring-2"
+            style={{ borderColor: '#E2E8F0', color: '#1E293B' }}
+          >
             {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
       </div>
+
 
       {/* ── NLP intent summary ──────────────────────────────────────────── */}
       {isNlpMode && intentSummary && intentSummary !== 'Showing all doctors' && (
@@ -398,12 +590,14 @@ function FindDoctorsContent() {
       )}
       {/* ── Did You Mean banner ─────────────────────────────────────── */}
       {showDidYouMean && (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+        <div
+        className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs"
+        style={{ borderColor: 'rgba(224,125,84,0.30)', background: 'rgba(224,125,84,0.06)', color: '#92400e' }}>
           <span>
             Did you mean{' '}
             <button
               type="button"
-              className="font-semibold underline underline-offset-2 transition-colors hover:text-amber-900 dark:hover:text-amber-200"
+              className="font-semibold underline underline-offset-2 transition-colors hover:opacity-70"
               onClick={() => { setLocalSearch(didYouMean!); }}
             >
               &ldquo;{didYouMean}&rdquo;
@@ -414,7 +608,7 @@ function FindDoctorsContent() {
             type="button"
             onClick={() => setDismissedDidYouMean(didYouMean!)}
             aria-label="Dismiss suggestion"
-            className="shrink-0 rounded p-0.5 transition-colors hover:bg-amber-200 dark:hover:bg-amber-800"
+            className="shrink-0 rounded p-0.5 transition-colors hover:bg-orange-100"
           >
             ✕
           </button>
@@ -426,15 +620,25 @@ function FindDoctorsContent() {
         <FilterSelect label="City"           value={city}           options={filterOptions?.cities ?? []}           placeholder="All cities"          onChange={setCity} loading={filtersLoading} />
         <FilterSelect label="Language"       value={language}       options={filterOptions?.languages ?? []}        placeholder="Any language"         onChange={setLang} loading={filtersLoading} />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Experience</label>
-          <select value={experienceKey} onChange={(e) => setExp(e.target.value)} className="h-9 rounded-lg border bg-background px-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+          <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6B7280' }}>Experience</label>
+          <select
+            value={experienceKey}
+            onChange={(e) => setExp(e.target.value)}
+            className="h-9 rounded-xl border bg-white px-2.5 text-sm outline-none transition-all focus:ring-2"
+            style={{ borderColor: '#E2E8F0', color: '#1E293B' }}
+          >
             <option value="">Any experience</option>
             {EXPERIENCE_RANGES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Fee</label>
-          <select value={feeKey} onChange={(e) => setFee(e.target.value)} className="h-9 rounded-lg border bg-background px-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
+          <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6B7280' }}>Fee</label>
+          <select
+            value={feeKey}
+            onChange={(e) => setFee(e.target.value)}
+            className="h-9 rounded-xl border bg-white px-2.5 text-sm outline-none transition-all focus:ring-2"
+            style={{ borderColor: '#E2E8F0', color: '#1E293B' }}
+          >
             <option value="">Any fee</option>
             {FEE_RANGES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
           </select>
@@ -445,7 +649,7 @@ function FindDoctorsContent() {
       {activeFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {activeFilters.map((f, i) => <ActiveFilterBadge key={i} label={f.label} onRemove={f.onRemove} />)}
-          <button onClick={clearAll} className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground">Clear all</button>
+          <button onClick={clearAll} className="text-xs font-semibold underline underline-offset-2 transition-colors" style={{ color: '#6B7280' }}>Clear all</button>
         </div>
       )}
 

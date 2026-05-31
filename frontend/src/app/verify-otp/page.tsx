@@ -35,6 +35,8 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { AUTH_CONSTANTS } from '@/config/constants';
 import { getAuthError } from '@/config/auth-errors';
 import { useAuthAnalytics } from '@/hooks/useAuthAnalytics';
+import { AuthCard } from '@/components/auth/auth-card';
+import { AuthButton } from '@/components/auth/auth-button';
 
 export default function VerifyOtpPage() {
   const { isAuthenticated, isSessionLoading, login, user } = useAuthStore();
@@ -194,7 +196,7 @@ export default function VerifyOtpPage() {
         className="w-full"
       >
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-[0_2px_24px_rgba(0,0,0,0.08)] border border-border/50 p-7 sm:p-8 relative overflow-hidden">
+        <AuthCard className="relative overflow-hidden">
           {/* Loading overlay */}
           <AnimatePresence>
             {loading && (
@@ -205,7 +207,7 @@ export default function VerifyOtpPage() {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 z-10 bg-white/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 rounded-2xl"
               >
-                <div className="h-10 w-10 rounded-full border-[3px] border-primary/20 border-t-primary animate-spin" />
+                <div className="h-10 w-10 rounded-full border-[3px] border-ring/20 border-t-ring animate-spin" />
                 <p className="text-sm font-medium text-muted-foreground">Verifying…</p>
               </motion.div>
             )}
@@ -213,12 +215,12 @@ export default function VerifyOtpPage() {
 
           {/* Header */}
           <div className="mb-6 text-center">
-            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 mb-4">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-sky-50 mb-4">
               <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7" aria-hidden="true">
-                <path d="M8 4h16v20a4 4 0 01-4 4H8a4 4 0 01-4-4V8a4 4 0 014-4z" fill="hsl(174 62% 37%)" opacity=".12"/>
-                <path d="M12 14h8M12 18h5" stroke="hsl(174 62% 37%)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M20 4v4h4" stroke="hsl(174 62% 37%)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="10" cy="24" r="3" fill="hsl(152 60% 38%)"/>
+                <path d="M8 4h16v20a4 4 0 01-4 4H8a4 4 0 01-4-4V8a4 4 0 014-4z" fill="hsl(206 100% 59%)" opacity=".12"/>
+                <path d="M12 14h8M12 18h5" stroke="hsl(206 100% 59%)" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M20 4v4h4" stroke="hsl(206 100% 59%)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="10" cy="24" r="3" fill="hsl(206 100% 59%)"/>
                 <path d="M9 24l.8.8 1.6-1.6" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
@@ -300,19 +302,15 @@ export default function VerifyOtpPage() {
           </AnimatePresence>
 
           {/* Manual verify button (for accessibility / keyboard users) */}
-          <button
+          <AuthButton
             onClick={() => handleVerify(otp)}
             disabled={loading || otp.length < AUTH_CONSTANTS.OTP_LENGTH}
-            aria-busy={loading}
-            className="mt-5 w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold
-              flex items-center justify-center gap-2
-              hover:bg-primary/90 active:scale-[0.98] transition-all duration-150
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+            loading={loading}
+            className="mt-5"
           >
             Verify OTP
-          </button>
-        </div>
+          </AuthButton>
+        </AuthCard>
 
         {/* Back link */}
         <motion.div
@@ -323,8 +321,8 @@ export default function VerifyOtpPage() {
         >
           <Link
             href={ROUTES.login}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-ring transition-colors
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
               <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -336,7 +334,7 @@ export default function VerifyOtpPage() {
         {/* Legal footer */}
         <p className="mt-5 text-center text-xs text-slate-500 leading-relaxed">
           Having trouble?{' '}
-          <Link href="mailto:support@healthconsult.com" className="underline underline-offset-2 text-slate-600 hover:text-slate-800 transition-colors">
+          <Link href="mailto:support@healthconsult.com" className="underline underline-offset-2 text-slate-600 hover:text-ring transition-colors">
             Contact support
           </Link>
         </p>

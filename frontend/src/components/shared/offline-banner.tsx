@@ -55,9 +55,10 @@ export function OfflineBanner() {
           <div
             className={`flex items-center justify-center gap-2.5 px-4 py-2 text-sm font-medium ${
               isOffline
-                ? 'bg-amber-500 text-white'
-                : 'bg-emerald-500 text-white'
+                ? 'text-white'
+                : 'text-white'
             }`}
+            style={{ background: isOffline ? '#E07D54' : '#899481' }}
           >
             {isOffline ? (
               <>

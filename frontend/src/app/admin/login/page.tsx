@@ -19,12 +19,14 @@ import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
 import { parseApiError } from '@/utils/errors';
 import { credentialLoginSchema, CredentialLoginInput } from '@/modules/auth/schemas/auth.schema';
-import { AuthErrorBanner } from '@/components/auth/auth-error-banner';
 import { FormField } from '@/components/auth/form-field';
 import { AuthInput } from '@/components/auth/auth-input';
 import { PasswordInput } from '@/components/auth/password-input';
 import { AuthButton } from '@/components/auth/auth-button';
 import { SessionLoader } from '@/components/shared/session-loader';
+import { AuthLayout } from '@/components/layout/auth-layout';
+import { AuthCard } from '@/components/auth/auth-card';
+import { motion } from 'framer-motion';
 
 export default function AdminLoginPage() {
   const { isAuthenticated, isSessionLoading, login, user } = useAuthStore();
@@ -73,68 +75,71 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-700/60 bg-slate-800 p-7 shadow-2xl">
-        {/* Minimal brand — internal tool */}
-        <div className="mb-6 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-            </svg>
-          </div>
-          <div>
-            <div className="text-sm font-bold text-white">Admin Portal</div>
-            <div className="text-[10px] text-slate-400">Restricted Access</div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-          <FormField label="" htmlFor="email" error={errors.email?.message}>
-            <input
-              id="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoFocus
-              placeholder="Admin email"
-              className="h-11 w-full rounded-xl border border-slate-600 bg-slate-700 px-3.5 text-sm text-white placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all"
-              {...register('email')}
-            />
-            {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
-          </FormField>
-
-          <FormField label="" htmlFor="password" error={errors.password?.message}>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Password"
-              className="h-11 w-full rounded-xl border border-slate-600 bg-slate-700 px-3.5 text-sm text-white placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all"
-              {...register('password')}
-            />
-            {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
-          </FormField>
-
-          <input type="hidden" {...register('role')} />
-
-          {bannerError && (
-            <p className="rounded-lg border border-red-700/40 bg-red-900/20 px-3 py-2 text-xs text-red-400">
-              {bannerError}
+    <AuthLayout>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="w-full"
+      >
+        <AuthCard>
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-sky-50 mb-4">
+              <svg className="h-7 w-7 text-ring" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+              </svg>
+            </div>
+            <h1 className="text-[1.5rem] font-bold tracking-tight text-foreground leading-tight">
+              Admin Portal
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Restricted Portal Access
             </p>
-          )}
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 disabled:opacity-60"
-          >
-            {loading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            ) : null}
-            Access Admin
-          </button>
-        </form>
-      </div>
-    </div>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+            <FormField label="" htmlFor="email" error={errors.email?.message}>
+              <AuthInput
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoFocus
+                placeholder="Admin email"
+                error={!!errors.email}
+                {...register('email')}
+              />
+            </FormField>
+
+            <FormField label="" htmlFor="password" error={errors.password?.message}>
+              <PasswordInput
+                id="password"
+                autoComplete="current-password"
+                placeholder="Password"
+                error={!!errors.password}
+                {...register('password')}
+              />
+            </FormField>
+
+            <input type="hidden" {...register('role')} />
+
+            {bannerError && (
+              <p className="rounded-xl border border-destructive/20 bg-destructive/8 px-3.5 py-2.5 text-xs text-destructive">
+                {bannerError}
+              </p>
+            )}
+
+            <AuthButton
+              type="submit"
+              disabled={loading}
+              loading={loading}
+            >
+              Access Admin
+            </AuthButton>
+          </form>
+        </AuthCard>
+      </motion.div>
+    </AuthLayout>
   );
 }
